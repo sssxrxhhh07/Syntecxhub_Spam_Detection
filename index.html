@@ -3,31 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spam Detector</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>SpamShield — Intelligent Spam Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
 :root {
-  --bg: #0d0f10;
-  --surface: #161a1c;
-  --surface2: #1e2427;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.13);
-  --text: #e8eaeb;
-  --muted: #6b7880;
-  --spam: #ff4d4d;
-  --spam-dim: rgba(255,77,77,0.12);
-  --spam-glow: rgba(255,77,77,0.25);
-  --ham: #00c896;
-  --ham-dim: rgba(0,200,150,0.10);
-  --ham-glow: rgba(0,200,150,0.22);
-  --accent: #f0c040;
-  --accent-dim: rgba(240,192,64,0.12);
-  --blue: #4da6ff;
-  --blue-dim: rgba(77,166,255,0.12);
-  --mono: 'DM Mono', monospace;
-  --display: 'Syne', sans-serif;
+  --bg: #030508;
+  --bg2: #070b10;
+  --bg3: #0b1018;
+  --panel: #0e1520;
+  --panel2: #131c2b;
+  --border: rgba(255,255,255,0.055);
+  --border2: rgba(255,255,255,0.1);
+  --text: #c8d4e0;
+  --muted: #3a4a5c;
+  --muted2: #6a7f94;
+  --red: #ff3055;
+  --red-dim: rgba(255,48,85,0.12);
+  --red-glow: rgba(255,48,85,0.4);
+  --red-border: rgba(255,48,85,0.22);
+  --green: #00d97e;
+  --green-dim: rgba(0,217,126,0.1);
+  --green-glow: rgba(0,217,126,0.35);
+  --green-border: rgba(0,217,126,0.2);
+  --gold: #f5c842;
+  --blue: #3d9cf5;
+  --violet: #9b6dff;
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Space Grotesk', sans-serif;
+  --headline: 'Bebas Neue', sans-serif;
+  --r: 14px;
+  --r-sm: 8px;
 }
 
 html { scroll-behavior: smooth; }
@@ -40,472 +47,668 @@ body {
   overflow-x: hidden;
 }
 
-/* ── header ── */
+/* ── BACKGROUND ── */
+.bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.bg-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 1; animation: orbFloat 12s ease-in-out infinite; }
+.bg-orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,48,85,0.055), transparent 70%); top: -150px; right: 5%; animation-duration: 14s; }
+.bg-orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,217,126,0.04), transparent 70%); bottom: 10%; left: -80px; animation-delay: -5s; animation-duration: 18s; }
+.bg-orb-3 { width: 350px; height: 350px; background: radial-gradient(circle, rgba(61,156,245,0.035), transparent 70%); top: 40%; right: 20%; animation-delay: -9s; animation-duration: 16s; }
+@keyframes orbFloat {
+  0%,100% { transform: translateY(0) scale(1); }
+  33%      { transform: translateY(-40px) scale(1.08); }
+  66%      { transform: translateY(25px) scale(0.95); }
+}
+body::after {
+  content:''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  opacity: 0.4;
+}
+.grid-lines {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,0.01) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 30%, transparent 100%);
+}
+
+#app { position: relative; z-index: 2; }
+
+/* ── HEADER ── */
 header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem;
+  background: rgba(3,5,8,0.7);
+  backdrop-filter: blur(30px) saturate(1.6);
   border-bottom: 1px solid var(--border);
-  padding: 1.25rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  background: rgba(13,15,16,0.92);
-  backdrop-filter: blur(12px);
-  z-index: 100;
 }
-.logo {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 18px; font-weight: 800; letter-spacing: -0.02em;
-}
+.logo { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: .04em; }
 .logo-icon {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: var(--spam); display: flex; align-items: center;
-  justify-content: center; font-size: 16px;
+  width: 32px; height: 32px; border-radius: 9px;
+  background: linear-gradient(135deg, #ff3055, #ff6b35);
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+  box-shadow: 0 0 20px var(--red-glow), 0 0 40px rgba(255,48,85,0.15);
+  animation: iconPulse 3s ease-in-out infinite;
 }
-.status-pill {
-  font-family: var(--mono); font-size: 11px;
-  padding: 4px 12px; border-radius: 99px;
-  background: var(--accent-dim); color: var(--accent);
-  border: 1px solid rgba(240,192,64,0.25);
-  display: flex; align-items: center; gap: 6px;
+@keyframes iconPulse {
+  0%,100%{box-shadow:0 0 20px var(--red-glow),0 0 40px rgba(255,48,85,0.15)}
+  50%{box-shadow:0 0 35px var(--red-glow),0 0 70px rgba(255,48,85,0.28)}
 }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.logo-sub { font-size: 10px; font-weight: 400; color: var(--muted2); font-family: var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.badge { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; padding: 4px 11px; border-radius: 99px; border: 1px solid var(--border2); color: var(--muted2); display: flex; align-items: center; gap: 5px; transition: all .3s; }
+.badge.live { border-color: var(--green-border); color: var(--green); background: var(--green-dim); }
+.badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.6)} }
 
-/* ── layout ── */
-main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+/* Anchor nav links */
+.nav-links { display: flex; gap: 0; }
+.nav-link { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 0 14px; height: 60px; display: flex; align-items: center; color: var(--muted); border: none; background: none; cursor: pointer; transition: color .2s; border-bottom: 2px solid transparent; text-decoration: none; }
+.nav-link:hover { color: var(--text); }
+.nav-link.active { color: var(--text); border-bottom-color: var(--red); }
 
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
-.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: .75rem; }
+/* ── MAIN LAYOUT ── */
+main { padding-top: 60px; }
 
-section { margin-bottom: 2.5rem; }
-.section-label {
-  font-family: var(--mono); font-size: 11px; font-weight: 500;
-  color: var(--muted); letter-spacing: .12em; text-transform: uppercase;
-  margin-bottom: .85rem; display: flex; align-items: center; gap: 8px;
+/* ── SECTION BASE ── */
+.section { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 5rem 0 4rem; position: relative; }
+.section:not(:last-child)::after { content:''; display:block; height:1px; background: linear-gradient(90deg, transparent, var(--border2) 30%, var(--border2) 70%, transparent); margin: 0 2.5rem; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; width: 100%; }
+
+/* ── SECTION HEADER ── */
+.section-eyebrow {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--red); display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;
 }
-.section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+.section-eyebrow::before { content:''; width: 24px; height: 1px; background: var(--red); flex-shrink: 0; }
+.section-title { font-family: var(--headline); font-size: clamp(3rem, 6vw, 5.5rem); letter-spacing: .04em; line-height: .92; color: #e8f0f8; margin-bottom: 1.5rem; }
+.section-title span { color: var(--red); }
+.section-sub { font-family: var(--display); font-size: 15px; color: var(--muted2); line-height: 1.7; max-width: 480px; }
 
-/* ── cards ── */
-.card {
-  background: var(--surface);
+/* ── HERO SECTION ── */
+#hero { min-height: calc(100vh - 60px); padding-top: 6rem; }
+.hero-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+.hero-left { }
+.hero-pretitle { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--red); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
+.hero-pretitle::before { content:''; width: 20px; height: 1px; background: var(--red); }
+.hero-heading { font-family: var(--headline); font-size: clamp(4rem, 8vw, 7.5rem); line-height: .88; letter-spacing: .03em; color: #eef4fa; margin-bottom: 1.5rem; }
+.hero-heading .red { color: var(--red); }
+.hero-desc { color: var(--muted2); font-size: 15px; line-height: 1.75; margin-bottom: 2.5rem; max-width: 400px; }
+.hero-cta-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.hero-right { position: relative; }
+.hero-classifier {
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.25rem;
-}
-.card-sm { padding: .9rem 1rem; }
-
-/* ── stat cards ── */
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1rem;
-}
-.stat-val { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; }
-.stat-lbl { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-/* ── pipeline viz ── */
-.pipe {
-  display: flex; align-items: center; gap: 0;
-  overflow-x: auto; padding-bottom: 4px;
-  margin-bottom: 2rem;
-}
-.pipe-step {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 10px;
-  padding: .7rem 1rem;
-  min-width: 110px;
-  text-align: center;
+  border-radius: 20px;
+  overflow: hidden;
   position: relative;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  animation: floatCard 6s ease-in-out infinite;
+}
+@keyframes floatCard { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.hero-classifier::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--red) 40%, var(--red) 60%, transparent);
+  opacity: 0; transition: opacity .5s;
+}
+.hero-classifier.result-active::before { opacity: 1; }
+
+.clf-header { padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.clf-dots { display: flex; gap: 5px; }
+.clf-dot { width: 8px; height: 8px; border-radius: 50%; }
+.clf-dot:nth-child(1){background:#ff3055;opacity:.7}
+.clf-dot:nth-child(2){background:#f5c842;opacity:.6}
+.clf-dot:nth-child(3){background:#00d97e;opacity:.6}
+.clf-title { font-family: var(--mono); font-size: 10px; color: var(--muted2); letter-spacing: .1em; margin-left: 4px; }
+.clf-train-badge { margin-left: auto; font-family: var(--mono); font-size: 9px; padding: 2px 8px; border-radius: 5px; background: var(--red-dim); color: #ff7090; border: 1px solid var(--red-border); }
+.clf-train-badge.ready { background: var(--green-dim); color: #30e890; border-color: var(--green-border); }
+
+.clf-body { padding: 1.25rem 1.4rem; }
+.clf-label { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: .6rem; }
+.msg-box {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--r); color: var(--text); font-family: var(--display);
+  font-size: 14px; line-height: 1.7; padding: 1rem 1.1rem;
+  resize: none; outline: none; transition: border-color .25s, box-shadow .25s;
+  min-height: 100px;
+}
+.msg-box:focus { border-color: rgba(255,48,85,0.35); box-shadow: 0 0 0 3px rgba(255,48,85,0.07); }
+.msg-box::placeholder { color: var(--muted); font-style: italic; font-size: 13px; }
+.clf-actions { display: flex; gap: 6px; margin-top: .85rem; flex-wrap: wrap; align-items: center; }
+.hint { margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+kbd { background: var(--panel2); border: 1px solid var(--border2); border-radius: 3px; padding: 1px 5px; font-size: 9px; font-family: var(--mono); }
+
+/* highlight zone */
+.hl-pane { border-top: 1px solid var(--border); padding: 1.1rem 1.4rem; display: none; animation: slideIn .3s cubic-bezier(.16,1,.3,1); }
+@keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+.hl-zone { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r); padding: .85rem 1rem; font-size: 14px; line-height: 1.75; word-break: break-word; }
+.kw-s { background: rgba(255,48,85,.15); color: #ff7090; border-radius: 4px; padding: 1px 4px; border-bottom: 2px solid var(--red); font-weight: 600; position: relative; cursor: default; }
+.kw-h { background: rgba(0,217,126,.12); color: #30e890; border-radius: 4px; padding: 1px 4px; border-bottom: 2px solid var(--green); font-weight: 600; position: relative; cursor: default; }
+.kw-tip { position: absolute; bottom: calc(100%+6px); left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--border2); padding: 2px 8px; border-radius: 5px; font-size: 10px; font-family: var(--mono); color: var(--muted2); white-space: nowrap; z-index: 20; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.kw-s:hover .kw-tip, .kw-h:hover .kw-tip { opacity: 1; }
+
+/* result strip */
+.result-strip { display: none; border-top: 1px solid var(--border); padding: 1.25rem 1.4rem; animation: slideIn .4s cubic-bezier(.16,1,.3,1); }
+.result-strip.spam { background: linear-gradient(135deg, rgba(255,48,85,.07), transparent); border-top-color: var(--red-border); }
+.result-strip.ham  { background: linear-gradient(135deg, rgba(0,217,126,.05), transparent); border-top-color: var(--green-border); }
+.result-row { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; }
+.verdict-big { font-family: var(--headline); font-size: 2.2rem; letter-spacing: .06em; line-height: 1; animation: verdictPop .35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes verdictPop { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+.verdict-big.spam { color: var(--red); text-shadow: 0 0 30px var(--red-glow); }
+.verdict-big.ham  { color: var(--green); text-shadow: 0 0 30px var(--green-glow); }
+.verdict-sub { font-size: 12px; color: var(--muted2); margin-top: 4px; line-height: 1.5; }
+.prob-block { flex: 1; min-width: 180px; }
+.prob-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .1em; margin-bottom: 6px; }
+.prob-track { width: 100%; height: 10px; background: rgba(255,255,255,.05); border-radius: 5px; overflow: hidden; position: relative; }
+.prob-track::before { content:''; position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(255,255,255,.12); }
+.prob-fill { height: 100%; border-radius: 5px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+.prob-ticks { display: flex; justify-content: space-between; margin-top: 3px; }
+.prob-tick { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+.prob-pct { font-family: var(--headline); font-size: 2rem; letter-spacing: .04em; line-height: 1; animation: verdictPop .4s .1s cubic-bezier(.34,1.56,.64,1) both; }
+.kw-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: .85rem; }
+.kw-chip { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 6px; display: flex; align-items: center; gap: 4px; animation: chipPop .3s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes chipPop { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+.kw-chip.spam { background: var(--red-dim); color: #ff7090; border: 1px solid var(--red-border); }
+.kw-chip.ham  { background: var(--green-dim); color: #30e890; border: 1px solid var(--green-border); }
+.kw-chip .wt { font-size: 8px; opacity: .6; }
+.kw-sum-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 5px; }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  font-family: var(--display); font-size: 12px; font-weight: 700; letter-spacing: .04em;
+  padding: .65rem 1.5rem; border-radius: var(--r-sm);
+  background: linear-gradient(135deg, #ff3055 0%, #ff5533 100%);
+  color: #fff; border: none; cursor: pointer;
+  box-shadow: 0 4px 20px var(--red-glow), 0 1px 0 rgba(255,255,255,.1) inset;
+  transition: all .2s; position: relative; overflow: hidden;
+}
+.btn-primary::after { content:''; position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);pointer-events:none; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--red-glow); filter:brightness(1.1); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity:.35; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-ghost { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; padding: .6rem 1rem; border-radius: var(--r-sm); background: transparent; color: var(--muted2); border: 1px solid var(--border2); cursor: pointer; transition: all .15s; }
+.btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,.18); background: var(--panel2); }
+
+/* ── METRICS STRIP (hero) ── */
+.metrics-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: .6rem; margin-top: 2rem; }
+.metric-item {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: .85rem 1rem;
+  display: flex; flex-direction: column; gap: 4px;
+  position: relative; overflow: hidden;
+  transition: border-color .3s, transform .3s;
+}
+.metric-item:hover { border-color: var(--border2); transform: translateY(-2px); }
+.metric-item::before { content:''; position:absolute;top:0;left:0;right:0;height:2px; }
+.metric-item.m-green::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.metric-item.m-blue::before{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
+.metric-item.m-gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.metric-item.m-violet::before{background:linear-gradient(90deg,transparent,var(--violet),transparent)}
+.metric-val { font-family: var(--headline); font-size: 1.7rem; letter-spacing: .04em; line-height: 1; }
+.metric-lbl { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .07em; text-transform: uppercase; }
+
+/* ── PIPELINE SECTION ── */
+#pipeline { padding: 5rem 0; min-height: auto; }
+.pipeline-scroll {
+  display: flex; align-items: stretch; gap: 0;
+  padding: 1.5rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 18px;
+  overflow-x: auto; margin-bottom: 2.5rem;
+}
+.pipeline-scroll::-webkit-scrollbar { height: 4px; }
+.pipeline-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.pipe-step {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 1rem 1.25rem; min-width: 100px; text-align: center; flex-shrink: 0;
+  transition: border-color .2s, box-shadow .2s, transform .2s;
   opacity: 0;
-  animation: fadeUp .4s ease forwards;
 }
-.pipe-step:nth-child(1) { animation-delay: .1s }
-.pipe-step:nth-child(3) { animation-delay: .2s }
-.pipe-step:nth-child(5) { animation-delay: .3s }
-.pipe-step:nth-child(7) { animation-delay: .4s }
-.pipe-step:nth-child(9) { animation-delay: .5s }
-.pipe-step:nth-child(11){ animation-delay: .6s }
-@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-.pipe-icon { font-size: 20px; }
-.pipe-name { font-size: 11px; font-weight: 600; color: var(--text); }
-.pipe-sub  { font-family: var(--mono); font-size: 10px; color: var(--muted); }
-.pipe-arrow { font-size: 16px; color: var(--border2); padding: 0 4px; flex-shrink:0; }
+.pipe-step.active-step { border-color: var(--green); box-shadow: 0 0 20px rgba(0,217,126,.15); }
+.pipe-step:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.pipe-icon { font-size: 22px; }
+.pipe-name { font-family: var(--display); font-size: 10px; font-weight: 700; color: var(--text); }
+.pipe-sub  { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+.pipe-arr  { font-size: 14px; color: var(--muted); padding: 0 10px; align-self: center; flex-shrink: 0; }
 
-/* ── model cards ── */
-.model-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.1rem 1.2rem;
-  transition: border-color .2s;
-}
-.model-card.winner {
-  border-color: var(--ham);
-  box-shadow: 0 0 20px var(--ham-glow);
-}
-.model-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-.winner-badge {
-  display: inline-block; font-family: var(--mono); font-size: 10px;
-  padding: 2px 8px; border-radius: 99px;
-  background: var(--ham-dim); color: var(--ham);
-  border: 1px solid rgba(0,200,150,0.3); margin-bottom: 10px;
-}
-.metric-row { display: flex; flex-direction: column; gap: 5px; }
-.mbar { display: flex; align-items: center; gap: 8px; }
-.mbar-label { font-family: var(--mono); font-size: 10px; color: var(--muted); width: 60px; }
-.mbar-track { flex: 1; height: 5px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
-.mbar-fill { height: 100%; border-radius: 3px; transition: width .8s cubic-bezier(.4,0,.2,1); width: 0; }
-.mbar-val { font-family: var(--mono); font-size: 10px; color: var(--text); width: 34px; text-align: right; }
+/* log */
+.log-box { font-family: var(--mono); font-size: 11.5px; line-height: 1.7; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); padding: 1.1rem; height: 200px; overflow-y: auto; color: var(--muted2); scroll-behavior: smooth; }
+.log-box::-webkit-scrollbar { width: 3px; }
+.log-box::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.log-line { padding: 2px 0; opacity: 0; animation: logFade .25s forwards; }
+@keyframes logFade { to{opacity:1} }
+.log-ok { color: var(--green); }
+.log-warn { color: var(--gold); }
+.log-info { color: var(--blue); }
+.log-err { color: var(--red); }
 
-/* ── confusion matrix ── */
-.cm-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.cm-cell { border-radius: 10px; padding: .9rem; text-align: center; }
-.cm-n { font-size: 28px; font-weight: 800; }
-.cm-l { font-family: var(--mono); font-size: 10px; margin-top: 2px; }
+/* preproc rows */
+.preproc-row { display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;line-height:1.6; }
+.preproc-row:last-child{border-bottom:none;}
+.ptag{font-size:9px;padding:2px 7px;border-radius:5px;flex-shrink:0;margin-top:2px;letter-spacing:.08em;}
+.ptag.s{background:var(--red-dim);color:#ff7090;}
+.ptag.h{background:var(--green-dim);color:#30e890;}
+.hl{color:var(--gold);}
 
-/* ── feature chips ── */
-.feat-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.chip {
-  font-family: var(--mono); font-size: 11px;
-  padding: 3px 9px; border-radius: 6px;
-  border: 1px solid var(--border2);
-}
-.chip.spam { background: var(--spam-dim); color: var(--spam); border-color: rgba(255,77,77,0.25); }
-.chip.ham  { background: var(--ham-dim);  color: var(--ham);  border-color: rgba(0,200,150,0.25); }
+/* ── RESULTS SECTION ── */
+#results { padding: 5rem 0; min-height: auto; }
+.results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+.results-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.model-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); padding: 1.25rem; transition: border-color .25s, box-shadow .25s; }
+.model-card.best { border-color: var(--green); box-shadow: 0 0 30px rgba(0,217,126,.13); }
+.model-name { font-family: var(--display); font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+.best-tag { display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:3px 9px;border-radius:99px;margin-bottom:12px;background:var(--green-dim);color:var(--green);border:1px solid var(--green-border); }
+.mbar{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.mbar-l{font-family:var(--mono);font-size:9px;color:var(--muted);width:60px;flex-shrink:0;}
+.mbar-t{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}
+.mbar-f{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1);width:0;}
+.mbar-v{font-family:var(--mono);font-size:9px;color:var(--text);width:32px;text-align:right;}
 
-/* ── test examples ── */
-.ex-list { display: flex; flex-direction: column; gap: 6px; }
-.ex-item {
-  display: flex; align-items: flex-start; gap: 10px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: .75rem 1rem;
-  animation: slideIn .3s ease;
-}
-@keyframes slideIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
-.ex-badge {
-  font-family: var(--mono); font-size: 10px; font-weight: 500;
-  padding: 3px 8px; border-radius: 6px; white-space: nowrap; flex-shrink:0;
-}
-.ex-badge.spam { background: var(--spam-dim); color: var(--spam); }
-.ex-badge.ham  { background: var(--ham-dim);  color: var(--ham); }
-.ex-text { font-size: 13px; color: var(--text); flex: 1; line-height: 1.5; }
-.ex-prob { font-family: var(--mono); font-size: 11px; color: var(--muted); flex-shrink:0; }
-.ex-tick { font-size: 13px; flex-shrink:0; }
+/* confusion matrix */
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); padding: 1.25rem; }
+.card:hover { border-color: var(--border2); }
+.cm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.cm-cell { border-radius: var(--r-sm); padding: .9rem; text-align: center; transition: transform .2s; }
+.cm-cell:hover{transform:scale(1.03);}
+.cm-n { font-family: var(--headline); font-size: 2rem; letter-spacing: .04em; }
+.cm-l { font-family: var(--mono); font-size: 9px; margin-top: 3px; opacity: .75; }
 
-/* ── predict zone ── */
-.predict-zone {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 16px;
-  padding: 1.5rem;
-}
-.predict-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-family: var(--mono); }
-textarea {
-  width: 100%; background: var(--bg);
-  border: 1px solid var(--border2); border-radius: 10px;
-  color: var(--text); font-family: var(--display); font-size: 14px;
-  padding: .85rem 1rem; resize: vertical; min-height: 80px; outline: none;
-  transition: border-color .2s;
-}
-textarea:focus { border-color: rgba(240,192,64,0.5); }
-.btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-button {
-  font-family: var(--display); font-weight: 600; font-size: 13px;
-  padding: .6rem 1.2rem; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--border2); background: var(--surface);
-  color: var(--text); transition: all .15s;
-}
-button:hover { background: var(--surface2); border-color: var(--border2); }
-button.primary {
-  background: var(--accent); color: #0d0f10;
-  border-color: var(--accent);
-}
-button.primary:hover { filter: brightness(1.1); }
-button.sample { font-size: 12px; padding: .4rem .9rem; color: var(--muted); }
+/* feat chips */
+.feat-chip{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:7px;border:1px solid var(--border2);transition:transform .15s,box-shadow .15s;cursor:default;}
+.feat-chip:hover{transform:translateY(-2px);}
+.feat-chip.spam{background:var(--red-dim);color:#ff7090;border-color:var(--red-border);}
+.feat-chip.ham{background:var(--green-dim);color:#30e890;border-color:var(--green-border);}
+.feat-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+.mini-tabs{display:flex;gap:4px;margin-bottom:.85rem;}
+.mini-tab{font-family:var(--mono);font-size:10px;padding:5px 12px;border-radius:7px;cursor:pointer;background:transparent;border:1px solid transparent;color:var(--muted);transition:all .15s;}
+.mini-tab.active{background:var(--panel2);border-color:var(--border2);color:var(--text);}
 
-.result-panel {
-  margin-top: 1rem;
-  border-radius: 12px;
-  padding: 1.1rem 1.25rem;
-  display: none;
-  animation: fadeIn .25s ease;
+/* examples */
+.ex-item{display:flex;align-items:flex-start;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-sm);padding:.85rem 1rem;margin-bottom:6px;transition:border-color .2s;}
+.ex-item:hover{border-color:var(--border2);}
+.ex-badge{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:5px;flex-shrink:0;margin-top:2px;letter-spacing:.06em;}
+.ex-badge.spam{background:var(--red-dim);color:#ff7090;}
+.ex-badge.ham{background:var(--green-dim);color:#30e890;}
+
+/* ── DATASET SECTION ── */
+#dataset { padding: 5rem 0; min-height: auto; }
+.ds-counters { display: flex; gap: 3rem; margin-bottom: 2rem; }
+.ds-counter-item {}
+.ds-counter-num { font-family: var(--headline); font-size: 3.5rem; letter-spacing: .02em; line-height: 1; }
+.ds-counter-lbl { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 3px; }
+.add-panel-wrap { border-top: 1px solid var(--border); padding-top: 1.25rem; margin-top: 1.25rem; }
+.btn-spam{font-family:var(--mono);font-size:11px;padding:.5rem 1rem;border-radius:8px;background:var(--red-dim);color:#ff7090;border:1px solid var(--red-border);cursor:pointer;transition:all .15s;}
+.btn-ham{font-family:var(--mono);font-size:11px;padding:.5rem 1rem;border-radius:8px;background:var(--green-dim);color:#30e890;border:1px solid var(--green-border);cursor:pointer;transition:all .15s;}
+.btn-spam:hover,.btn-ham:hover{filter:brightness(1.2);transform:translateY(-1px);}
+.feedback-msg{font-family:var(--mono);font-size:11px;color:var(--green);min-height:18px;margin-top:7px;}
+
+/* ── SCROLL ANIMATIONS ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
 }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-.result-panel.spam { background: var(--spam-dim); border: 1px solid rgba(255,77,77,0.3); }
-.result-panel.ham  { background: var(--ham-dim);  border: 1px solid rgba(0,200,150,0.3); }
-.result-verdict { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
-.result-verdict.spam { color: var(--spam); }
-.result-verdict.ham  { color: var(--ham); }
-.result-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 3px; }
-.prob-gauge { margin-top: 10px; }
-.gauge-track { height: 8px; background: rgba(255,255,255,.07); border-radius: 4px; overflow: hidden; margin-top: 5px; }
-.gauge-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); }
-.gauge-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 3px; }
+.reveal.in { opacity: 1; transform: none; }
+.reveal-delay-1 { transition-delay: .1s; }
+.reveal-delay-2 { transition-delay: .2s; }
+.reveal-delay-3 { transition-delay: .3s; }
+.reveal-delay-4 { transition-delay: .4s; }
 
-/* ── preprocessing demo ── */
-.preproc-demo { font-family: var(--mono); font-size: 12px; }
-.preproc-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); }
-.preproc-row:last-child { border-bottom: none; }
-.preproc-tag { font-size: 10px; padding: 2px 6px; border-radius: 5px; flex-shrink:0; margin-top: 2px; }
-.preproc-tag.in  { background: var(--blue-dim); color: var(--blue); }
-.preproc-tag.out { background: var(--ham-dim); color: var(--ham); }
-.preproc-text { line-height: 1.5; color: var(--text); word-break: break-word; }
-.preproc-text .hl { color: var(--accent); }
+/* ── DIVIDER ── */
+.section-divider { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 0; }
+.section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background: var(--border); }
+.section-divider span { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
 
-/* ── log ── */
-.log {
-  font-family: var(--mono); font-size: 11px;
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 10px; padding: 1rem;
-  max-height: 180px; overflow-y: auto; color: var(--muted);
+/* scroll indicator */
+.scroll-hint { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 2.5rem; }
+.scroll-line { width: 1px; height: 50px; background: linear-gradient(to bottom, var(--red), transparent); animation: scrollLine 2s ease-in-out infinite; }
+@keyframes scrollLine { 0%,100%{opacity:.4;transform:scaleY(1)} 50%{opacity:1;transform:scaleY(1.2)} }
+.scroll-text { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+/* legend */
+.legend{display:flex;gap:1.25rem;margin-top:.75rem;flex-wrap:wrap;}
+.legend-item{font-family:var(--mono);font-size:10px;color:var(--muted2);display:flex;align-items:center;gap:5px;}
+.lsw{width:13px;height:13px;border-radius:4px;}
+
+/* btn train */
+.btn-train{font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.04em;padding:.7rem 1.75rem;border-radius:var(--r-sm);background:var(--panel2);color:var(--text);border:1px solid var(--border2);cursor:pointer;transition:all .25s;margin-top:.85rem;display:inline-flex;align-items:center;gap:8px;}
+.btn-train:hover{border-color:var(--green);color:var(--green);box-shadow:0 0 20px var(--green-glow);}
+.btn-train.ready{background:var(--green-dim);border-color:var(--green);color:var(--green);box-shadow:0 0 20px var(--green-glow);}
+.btn-train:disabled{opacity:.35;cursor:not-allowed;}
+
+/* stat cards */
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;position:relative;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s;}
+.stat-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--r) var(--r) 0 0;}
+.stat-card[data-color="green"]::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.stat-card[data-color="blue"]::before{background:linear-gradient(90deg,transparent,var(--blue),transparent);}
+.stat-card[data-color="gold"]::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.stat-card[data-color="violet"]::before{background:linear-gradient(90deg,transparent,var(--violet),transparent);}
+.stat-n{font-family:var(--headline);font-size:2rem;letter-spacing:.04em;line-height:1;}
+.stat-l{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.06em;text-transform:uppercase;}
+.stat-glow{position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;filter:blur(30px);opacity:.15;pointer-events:none;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:1.5rem;}
+
+/* footer */
+footer { padding: 3rem 2.5rem; border-top: 1px solid var(--border); text-align: center; }
+footer p { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .08em; }
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* responsive */
+@media (max-width: 900px) {
+  .hero-layout { grid-template-columns: 1fr; gap: 2.5rem; }
+  .results-grid { grid-template-columns: 1fr; }
+  .results-3 { grid-template-columns: 1fr; }
+  .metrics-strip { grid-template-columns: repeat(2,1fr); }
+  .grid-4 { grid-template-columns: repeat(2,1fr); }
 }
-.log-line { padding: 1px 0; }
-.log-line.ok { color: var(--ham); }
-.log-line.warn { color: var(--accent); }
-.log-line.info { color: var(--blue); }
-
-/* ── tab bar ── */
-.tabs { display: flex; gap: 4px; margin-bottom: 1rem; }
-.tab {
-  font-size: 12px; padding: 5px 14px; border-radius: 8px;
-  cursor: pointer; border: 1px solid transparent;
-  background: transparent; color: var(--muted); font-family: var(--display); font-weight: 600;
-  transition: all .15s;
-}
-.tab.active { background: var(--surface2); border-color: var(--border2); color: var(--text); }
-
-/* ── scrollbar ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 </style>
 </head>
 <body>
 
+<div class="bg-canvas">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+<div class="grid-lines"></div>
+
+<div id="app">
+
+<!-- ══════ HEADER ══════ -->
 <header>
   <div class="logo">
     <div class="logo-icon">🛡</div>
-    SpamDetector
+    <div>
+      <div>SpamShield</div>
+      <div class="logo-sub">Intelligent classifier</div>
+    </div>
   </div>
-  <div class="status-pill">
-    <div class="dot"></div>
-    <span id="headerStatus">Initialising…</span>
+  <nav class="nav-links">
+    <a class="nav-link active" href="#hero">Detect</a>
+    <a class="nav-link" href="#pipeline">Train</a>
+    <a class="nav-link" href="#results">Results</a>
+    <a class="nav-link" href="#dataset">Dataset</a>
+  </nav>
+  <div class="header-right">
+    <div class="badge" id="statusBadge"><div class="badge-dot"></div><span id="statusText">OFFLINE</span></div>
+    <div class="badge" id="modelBadge">No model loaded</div>
   </div>
 </header>
 
 <main>
 
-  <!-- Pipeline diagram -->
-  <div class="pipe" id="pipeViz">
-    <div class="pipe-step">
-      <div class="pipe-icon">📂</div>
-      <div class="pipe-name">Dataset</div>
-      <div class="pipe-sub">101 msgs</div>
-    </div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step">
-      <div class="pipe-icon">🔤</div>
-      <div class="pipe-name">Preprocess</div>
-      <div class="pipe-sub">clean & tokenise</div>
-    </div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step">
-      <div class="pipe-icon">🧮</div>
-      <div class="pipe-name">TF-IDF / BoW</div>
-      <div class="pipe-sub">vectorise text</div>
-    </div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step">
-      <div class="pipe-icon">🧠</div>
-      <div class="pipe-name">Naive Bayes</div>
-      <div class="pipe-sub">+ Logistic Reg</div>
-    </div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step">
-      <div class="pipe-icon">📊</div>
-      <div class="pipe-name">Evaluate</div>
-      <div class="pipe-sub">P · R · F1</div>
-    </div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step">
-      <div class="pipe-icon">💾</div>
-      <div class="pipe-name">Save pipeline</div>
-      <div class="pipe-sub">reuse model</div>
-    </div>
-  </div>
+<!-- ══════════════════════════════════
+     HERO / PREDICTOR
+══════════════════════════════════ -->
+<section class="section" id="hero">
+  <div class="wrap">
+    <div class="hero-layout">
 
-  <!-- Dataset Manager -->
-  <section>
-    <div class="section-label">Training dataset</div>
-    <div class="card" style="margin-bottom:1rem;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px;">
-        <div style="display:flex;gap:1.5rem;">
-          <div><span style="font-size:22px;font-weight:800;color:var(--spam)" id="spamCount">40</span><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px;">spam msgs</div></div>
-          <div><span style="font-size:22px;font-weight:800;color:var(--ham)" id="hamCount">61</span><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px;">ham msgs</div></div>
-          <div><span style="font-size:22px;font-weight:800;color:var(--text)" id="totalCount">101</span><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px;">total</div></div>
+      <div class="hero-left">
+        <div class="hero-pretitle reveal">Machine Learning · NLP · Real-time</div>
+        <h1 class="hero-heading reveal reveal-delay-1">SPAM<br><span class="red">SHIELD</span></h1>
+        <p class="hero-desc reveal reveal-delay-2">An intelligent message classifier powered by Naive Bayes and Logistic Regression — detecting spam signals with keyword highlighting and confidence scoring.</p>
+        <div class="hero-cta-row reveal reveal-delay-3">
+          <a href="#pipeline" class="btn-primary" style="text-decoration:none">Train the Model ↓</a>
+          <a href="#dataset" class="btn-ghost" style="text-decoration:none">View Dataset</a>
         </div>
-        <button onclick="toggleAddPanel()" id="addToggleBtn" style="display:flex;align-items:center;gap:6px;padding:.5rem 1rem;font-size:13px;">
-          <span style="font-size:16px;line-height:1">＋</span> Add messages
-        </button>
+        <div class="scroll-hint reveal reveal-delay-4">
+          <div class="scroll-line"></div>
+        </div>
+        <!-- Quick stats (shown after training) -->
+        <div id="quickStats" style="display:none">
+          <div class="metrics-strip" id="quickStatGrid"></div>
+        </div>
       </div>
 
-      <!-- Add message panel -->
-      <div id="addPanel" style="display:none;border-top:1px solid var(--border);padding-top:1rem;">
-        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:flex-start;margin-bottom:8px;">
-          <textarea id="newMsgInput" placeholder="Type a message to add to the training set…" style="min-height:64px;font-size:13px;"></textarea>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <button onclick="addMessage('spam')" style="background:var(--spam-dim);color:var(--spam);border-color:rgba(255,77,77,0.3);font-size:12px;padding:.45rem .9rem;white-space:nowrap;">＋ Spam</button>
-            <button onclick="addMessage('ham')"  style="background:var(--ham-dim);color:var(--ham);border-color:rgba(0,200,150,0.3);font-size:12px;padding:.45rem .9rem;white-space:nowrap;">＋ Ham</button>
+      <div class="hero-right reveal reveal-delay-2">
+        <div class="hero-classifier" id="heroCard">
+          <div class="clf-header">
+            <div class="clf-dots">
+              <div class="clf-dot"></div>
+              <div class="clf-dot"></div>
+              <div class="clf-dot"></div>
+            </div>
+            <div class="clf-title">live_classifier.py</div>
+            <div class="clf-train-badge" id="clfBadge">needs training</div>
+          </div>
+          <div class="clf-body">
+            <div class="clf-label">Message Input</div>
+            <textarea class="msg-box" id="msgInput" placeholder="Paste or type any message to analyse for spam signals…" oninput="onInput()" rows="5"></textarea>
+            <div class="clf-actions">
+              <button class="btn-primary" id="classifyBtn" onclick="liveClassify()" disabled>Analyse →</button>
+              <button class="btn-ghost" onclick="loadSample('spam')">Spam sample</button>
+              <button class="btn-ghost" onclick="loadSample('ham')">Ham sample</button>
+              <button class="btn-ghost" onclick="clearMsg()">✕</button>
+              <div class="hint"><kbd>Ctrl</kbd>+<kbd>↵</kbd></div>
+            </div>
+            <div class="legend">
+              <div class="legend-item"><div class="lsw" style="background:rgba(255,48,85,.25);border:2px solid var(--red)"></div> Spam signal</div>
+              <div class="legend-item"><div class="lsw" style="background:rgba(0,217,126,.2);border:2px solid var(--green)"></div> Ham signal</div>
+            </div>
+          </div>
+
+          <div class="hl-pane" id="hlPane">
+            <div class="clf-label" style="margin-bottom:.5rem">Detected signals</div>
+            <div class="hl-zone" id="hlZone"></div>
+          </div>
+
+          <div class="result-strip" id="resultStrip">
+            <div class="result-row">
+              <div>
+                <div class="verdict-big" id="verdictBig">—</div>
+                <div class="verdict-sub" id="verdictSub"></div>
+              </div>
+              <div class="prob-block">
+                <div class="prob-label">SPAM PROBABILITY</div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="flex:1">
+                    <div class="prob-track"><div class="prob-fill" id="probFill"></div></div>
+                    <div class="prob-ticks"><span class="prob-tick">HAM</span><span class="prob-tick">50%</span><span class="prob-tick">SPAM</span></div>
+                  </div>
+                  <div class="prob-pct" id="probPct"></div>
+                </div>
+              </div>
+            </div>
+            <div id="kwSummary"></div>
           </div>
         </div>
+      </div>
 
-        <!-- Bulk paste -->
-        <details style="margin-bottom:10px;">
-          <summary style="font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;user-select:none;padding:4px 0;">Bulk add (one message per line)</summary>
-          <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     PIPELINE / TRAINING
+══════════════════════════════════ -->
+<section class="section" id="pipeline" style="min-height:auto;padding:6rem 0;">
+  <div class="wrap">
+    <div class="section-eyebrow reveal">Pipeline</div>
+    <h2 class="section-title reveal reveal-delay-1">TRAIN<br><span>THE MODEL</span></h2>
+    <p class="section-sub reveal reveal-delay-2">Run the full ML pipeline — preprocessing, vectorisation, model training and evaluation — all in the browser.</p>
+
+    <div style="height:2.5rem"></div>
+
+    <div class="pipeline-scroll reveal reveal-delay-1" id="pipelineViz">
+      <div class="pipe-step"><div class="pipe-icon">📂</div><div class="pipe-name">Dataset</div><div class="pipe-sub" id="pipeDs">101 msgs</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step"><div class="pipe-icon">🔤</div><div class="pipe-name">Preprocess</div><div class="pipe-sub">clean + tokenise</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step"><div class="pipe-icon">🧮</div><div class="pipe-name">TF-IDF / BoW</div><div class="pipe-sub">vectorise text</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step"><div class="pipe-icon">🧠</div><div class="pipe-name">Naive Bayes</div><div class="pipe-sub">+ Logistic Reg</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step"><div class="pipe-icon">📊</div><div class="pipe-name">Evaluate</div><div class="pipe-sub">P · R · F1</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step"><div class="pipe-icon">💾</div><div class="pipe-name">Save</div><div class="pipe-sub">best model</div></div>
+    </div>
+
+    <div class="reveal reveal-delay-2">
+      <div class="clf-label" style="margin-bottom:.6rem">Training Log</div>
+      <div class="log-box" id="trainLog"><div class="log-line">Waiting to start…</div></div>
+      <button class="btn-train" id="trainBtn" onclick="runTraining()"><span>▶</span> Run Training Pipeline</button>
+    </div>
+
+    <div id="preprocSection" style="display:none;margin-top:2rem">
+      <div class="section-divider"><span>Preprocessing Preview</span></div>
+      <div class="card reveal"><div id="preprocDemo"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     RESULTS
+══════════════════════════════════ -->
+<section class="section" id="results" style="min-height:auto;padding:6rem 0;">
+  <div class="wrap">
+    <div class="section-eyebrow reveal">Evaluation</div>
+    <h2 class="section-title reveal reveal-delay-1">MODEL<br><span>RESULTS</span></h2>
+
+    <div style="height:2rem"></div>
+
+    <div class="grid-4 reveal reveal-delay-1" id="resultsStatGrid">
+      <div class="stat-card"><div class="stat-n" id="rs1" style="color:var(--text)">—</div><div class="stat-l">Total messages</div></div>
+      <div class="stat-card"><div class="stat-n" id="rs2" style="color:var(--red)">—</div><div class="stat-l">Spam trained</div></div>
+      <div class="stat-card"><div class="stat-n" id="rs3" style="color:var(--green)">—</div><div class="stat-l">Ham trained</div></div>
+      <div class="stat-card"><div class="stat-n" id="rs4" style="color:var(--muted2)">—</div><div class="stat-l">Train / Test split</div></div>
+    </div>
+
+    <div class="results-3 reveal reveal-delay-2" id="modelGrid"></div>
+
+    <div class="results-grid reveal reveal-delay-3">
+      <div class="card">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:.75rem;letter-spacing:.1em;text-transform:uppercase">Confusion Matrix — Best Model</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;text-align:center;margin-bottom:6px;">
+          <span>Predicted Ham</span><span>Predicted Spam</span>
+        </div>
+        <div class="cm-grid">
+          <div class="cm-cell" style="background:var(--green-dim);border:1px solid var(--green-border)"><div class="cm-n" style="color:var(--green)" id="cmTN">—</div><div class="cm-l" style="color:var(--green)">True Negative</div></div>
+          <div class="cm-cell" style="background:rgba(255,48,85,.05);border:1px solid var(--red-border)"><div class="cm-n" style="color:var(--red)" id="cmFP">—</div><div class="cm-l" style="color:var(--red)">False Positive</div></div>
+          <div class="cm-cell" style="background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.18)"><div class="cm-n" style="color:var(--gold)" id="cmFN">—</div><div class="cm-l" style="color:var(--gold)">False Negative</div></div>
+          <div class="cm-cell" style="background:rgba(61,156,245,.08);border:1px solid rgba(61,156,245,.2)"><div class="cm-n" style="color:var(--blue)" id="cmTP">—</div><div class="cm-l" style="color:var(--blue)">True Positive</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="mini-tabs">
+          <button class="mini-tab active" onclick="showFeats('spam',this)">🔴 Spam signals</button>
+          <button class="mini-tab" onclick="showFeats('ham',this)">🟢 Ham signals</button>
+        </div>
+        <div class="feat-wrap" id="featChips"></div>
+      </div>
+    </div>
+
+    <div class="section-divider reveal"><span>Test Set Predictions</span></div>
+    <div id="exList" class="reveal reveal-delay-1"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     DATASET
+══════════════════════════════════ -->
+<section class="section" id="dataset" style="min-height:auto;padding:6rem 0;">
+  <div class="wrap">
+    <div class="section-eyebrow reveal">Data</div>
+    <h2 class="section-title reveal reveal-delay-1">TRAIN<br><span>DATASET</span></h2>
+
+    <div style="height:2rem"></div>
+
+    <div class="card reveal reveal-delay-2">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
+        <div class="ds-counters">
+          <div class="ds-counter-item"><div class="ds-counter-num" style="color:var(--red)" id="dSpam">40</div><div class="ds-counter-lbl">spam msgs</div></div>
+          <div class="ds-counter-item"><div class="ds-counter-num" style="color:var(--green)" id="dHam">61</div><div class="ds-counter-lbl">ham msgs</div></div>
+          <div class="ds-counter-item"><div class="ds-counter-num" id="dTotal">101</div><div class="ds-counter-lbl">total</div></div>
+        </div>
+        <button class="btn-ghost" onclick="toggleAdd()" id="addToggle">＋ Add messages</button>
+      </div>
+
+      <div id="addPanel" style="display:none" class="add-panel-wrap">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:flex-start;margin-bottom:8px">
+          <textarea id="newMsg" class="msg-box" placeholder="Type a message to add…" style="min-height:64px;font-size:13px" rows="3"></textarea>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn-spam" onclick="addMsg('spam')">＋ Spam</button>
+            <button class="btn-ham" onclick="addMsg('ham')">＋ Ham</button>
+          </div>
+        </div>
+        <details style="margin-bottom:10px">
+          <summary style="font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;user-select:none;padding:4px 0;letter-spacing:.08em">BULK ADD (ONE PER LINE)</summary>
+          <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div>
-              <div style="font-family:var(--mono);font-size:10px;color:var(--spam);margin-bottom:4px;">SPAM messages</div>
-              <textarea id="bulkSpam" placeholder="Paste spam messages, one per line…" style="min-height:90px;font-size:12px;"></textarea>
-              <button onclick="bulkAdd('spam')" style="margin-top:4px;font-size:11px;padding:.35rem .8rem;background:var(--spam-dim);color:var(--spam);border-color:rgba(255,77,77,0.3);">Add all as spam</button>
+              <div style="font-family:var(--mono);font-size:10px;color:#ff7090;margin-bottom:4px">SPAM messages</div>
+              <textarea id="bulkSpam" class="msg-box" placeholder="Paste spam messages…" style="min-height:80px;font-size:12px" rows="4"></textarea>
+              <button class="btn-spam" style="margin-top:4px" onclick="bulkAdd('spam')">Add all as spam</button>
             </div>
             <div>
-              <div style="font-family:var(--mono);font-size:10px;color:var(--ham);margin-bottom:4px;">HAM messages</div>
-              <textarea id="bulkHam" placeholder="Paste ham messages, one per line…" style="min-height:90px;font-size:12px;"></textarea>
-              <button onclick="bulkAdd('ham')" style="margin-top:4px;font-size:11px;padding:.35rem .8rem;background:var(--ham-dim);color:var(--ham);border-color:rgba(0,200,150,0.3);">Add all as ham</button>
+              <div style="font-family:var(--mono);font-size:10px;color:#30e890;margin-bottom:4px">HAM messages</div>
+              <textarea id="bulkHam" class="msg-box" placeholder="Paste ham messages…" style="min-height:80px;font-size:12px" rows="4"></textarea>
+              <button class="btn-ham" style="margin-top:4px" onclick="bulkAdd('ham')">Add all as ham</button>
             </div>
           </div>
         </details>
-
-        <!-- Recent additions -->
-        <div id="addedList" style="display:none;">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;">Recently added</div>
-          <div id="addedItems" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;"></div>
+        <div id="recentList" style="display:none">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:.08em">RECENTLY ADDED</div>
+          <div id="recentItems" style="display:flex;flex-direction:column;gap:4px;max-height:150px;overflow-y:auto"></div>
         </div>
-
-        <div id="addFeedback" style="font-family:var(--mono);font-size:11px;color:var(--ham);min-height:18px;margin-top:4px;"></div>
+        <div class="feedback-msg" id="addFeedback"></div>
       </div>
     </div>
-  </section>
-
-  <!-- Training log -->
-  <section>
-    <div class="section-label">Training log</div>
-    <div class="log" id="trainLog">
-      <div class="log-line">Waiting to start…</div>
-    </div>
-    <button class="primary" id="trainBtn" style="margin-top:10px;" onclick="runTraining()">▶ Run Training Pipeline</button>
-  </section>
-
-  <!-- Dataset stats (shown after training) -->
-  <section id="statsSection" style="display:none">
-    <div class="section-label">Training summary</div>
-    <div class="grid-4">
-      <div class="stat-card"><div class="stat-val" id="trainTotal">—</div><div class="stat-lbl">Total messages</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--spam)" id="trainSpam">—</div><div class="stat-lbl">Spam trained</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--ham)" id="trainHam">—</div><div class="stat-lbl">Ham trained</div></div>
-      <div class="stat-card"><div class="stat-val" id="trainSplit">—</div><div class="stat-lbl">Train / Test split</div></div>
-    </div>
-  </section>
-
-  <!-- Preprocessing demo -->
-  <section id="preprocSection" style="display:none">
-    <div class="section-label">Preprocessing examples</div>
-    <div class="card">
-      <div class="preproc-demo" id="preprocDemo"></div>
-    </div>
-  </section>
-
-  <!-- Model comparison -->
-  <section id="modelsSection" style="display:none">
-    <div class="section-label">Model comparison</div>
-    <div class="grid-3" id="modelGrid"></div>
-  </section>
-
-  <!-- Confusion matrix + features -->
-  <section id="detailSection" style="display:none">
-    <div class="section-label">Best model — Naive Bayes (CountVec)</div>
-    <div class="grid-2">
-      <div class="card">
-        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:10px;">Confusion matrix (test set)</div>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center;margin-bottom:6px;"><span>Predicted Ham</span><span>Predicted Spam</span></div>
-        <div class="cm-wrap">
-          <div class="cm-cell" style="background:var(--ham-dim);border:1px solid rgba(0,200,150,.2)">
-            <div class="cm-n" style="color:var(--ham)">16</div>
-            <div class="cm-l" style="color:var(--ham)">True Negative</div>
-          </div>
-          <div class="cm-cell" style="background:rgba(255,77,77,0.06);border:1px solid rgba(255,77,77,.12)">
-            <div class="cm-n" style="color:var(--spam)">0</div>
-            <div class="cm-l" style="color:var(--spam)">False Positive</div>
-          </div>
-          <div class="cm-cell" style="background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,.15)">
-            <div class="cm-n" style="color:var(--accent)">0</div>
-            <div class="cm-l" style="color:var(--accent)">False Negative</div>
-          </div>
-          <div class="cm-cell" style="background:var(--blue-dim);border:1px solid rgba(77,166,255,.2)">
-            <div class="cm-n" style="color:var(--blue)">10</div>
-            <div class="cm-l" style="color:var(--blue)">True Positive</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="tabs">
-          <button class="tab active" onclick="showFeats('spam',this)">🔴 Spam signals</button>
-          <button class="tab" onclick="showFeats('ham',this)">🟢 Ham signals</button>
-        </div>
-        <div class="feat-chips" id="featChips"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Test examples -->
-  <section id="examplesSection" style="display:none">
-    <div class="section-label">Test set predictions</div>
-    <div class="ex-list" id="exList"></div>
-  </section>
-
-  <!-- Live predictor -->
-  <section id="predictSection" style="display:none">
-    <div class="section-label">Live classifier</div>
-    <div class="predict-zone">
-      <div class="predict-label">Enter any message to classify</div>
-      <textarea id="msgInput" placeholder="Type or paste a message…"></textarea>
-      <div class="btn-row">
-        <button class="primary" onclick="liveClassify()">Classify ›</button>
-        <button class="sample" onclick="loadSample('spam')">Load spam sample</button>
-        <button class="sample" onclick="loadSample('ham')">Load ham sample</button>
-      </div>
-      <div class="result-panel" id="resultPanel">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <div class="result-verdict" id="resultVerdict"></div>
-            <div class="result-sub" id="resultSub"></div>
-          </div>
-          <div style="font-size:36px" id="resultEmoji"></div>
-        </div>
-        <div class="prob-gauge">
-          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted)">
-            <span>Spam probability</span><span id="probPct"></span>
-          </div>
-          <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
-          <div class="gauge-labels"><span>Ham</span><span>Spam</span></div>
-        </div>
-        <div id="topTokens" style="margin-top:10px;"></div>
-      </div>
-    </div>
-  </section>
+  </div>
+</section>
 
 </main>
 
+<footer>
+  <p>SpamShield · Naive Bayes + Logistic Regression · Runs entirely in your browser · No data sent anywhere</p>
+</footer>
+
+</div><!-- #app -->
+
 <script>
-/* ══════════════════════════════════════════════════════
-   DATASET
-══════════════════════════════════════════════════════ */
-const SPAM = [
+/* ════════════════════════════════════════
+   SCROLL REVEAL
+════════════════════════════════════════ */
+const ro = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');}});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+
+// Animate pipe steps on scroll
+const pipeObs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const steps=document.querySelectorAll('.pipe-step');
+      steps.forEach((s,i)=>{ setTimeout(()=>{ s.style.opacity='1'; s.style.transform='none'; s.style.transition='opacity .5s, transform .5s'; s.style.transitionDelay=(i*.08)+'s'; },50); });
+    }
+  });
+},{threshold:.2});
+pipeObs.observe(document.getElementById('pipelineViz'));
+
+/* ════════════════════════════════════════
+   ACTIVE NAV LINK ON SCROLL
+════════════════════════════════════════ */
+const sections = ['hero','pipeline','results','dataset'];
+const navLinks = document.querySelectorAll('.nav-link');
+const sectionObs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      navLinks.forEach(l=>l.classList.remove('active'));
+      const link=document.querySelector('.nav-link[href="#'+e.target.id+'"]');
+      if(link)link.classList.add('active');
+    }
+  });
+},{threshold:.35});
+sections.forEach(id=>{ const el=document.getElementById(id); if(el)sectionObs.observe(el); });
+
+/* ════════════════════════════════════════
+   DATA
+════════════════════════════════════════ */
+const SPAM=[
   "FREE entry in 2 a weekly competition to win FA Cup Final tickets 21st May! Text FA to 87121",
   "WINNER!! You have been selected for a £1000 cash prize! Call 09061701461 IMMEDIATELY",
   "Congratulations ur awarded $500 prize. 2 claim call 555-8881 now!",
@@ -547,7 +750,7 @@ const SPAM = [
   "CASH LOANS approved in minutes. No credit check! Get £500-£5000 today.",
   "As a loyal customer you've been chosen for our exclusive prize draw!",
 ];
-const HAM = [
+const HAM=[
   "Hey, are you free for lunch tomorrow? I was thinking we could try that new place.",
   "Just finished the report. Can you review it before I send it to the client?",
   "Don't forget mom's birthday is on Sunday. Should we get her flowers?",
@@ -611,607 +814,454 @@ const HAM = [
   "My mom says hi and asks when you're visiting next.",
 ];
 
-/* ══════════════════════════════════════════════════════
-   PREPROCESSING
-══════════════════════════════════════════════════════ */
-function preprocess(text) {
-  let t = text.toLowerCase();
-  t = t.replace(/https?:\/\/\S+|www\.\S+/g, ' URL ');
-  t = t.replace(/[\+]?(\d[\s\-\(\)]?){7,}\d/g, ' PHONE ');
-  t = t.replace(/[£$€]/g, ' CURRENCY ');
-  t = t.replace(/\d+/g, ' NUM ');
-  t = t.replace(/[^\w\s]/g, ' ');
-  t = t.replace(/\s+/g, ' ').trim();
-  return t;
-}
+const SPAM_KW=[
+  {word:'free',weight:'HIGH'},{word:'winner',weight:'HIGH'},{word:'won',weight:'HIGH'},
+  {word:'prize',weight:'HIGH'},{word:'claim',weight:'HIGH'},{word:'urgent',weight:'HIGH'},
+  {word:'guaranteed',weight:'HIGH'},{word:'click',weight:'MED'},{word:'verify',weight:'MED'},
+  {word:'offer',weight:'MED'},{word:'selected',weight:'MED'},{word:'congratulations',weight:'HIGH'},
+  {word:'cash',weight:'MED'},{word:'loan',weight:'MED'},{word:'now',weight:'LOW'},
+  {word:'immediately',weight:'HIGH'},{word:'limited',weight:'MED'},{word:'discount',weight:'MED'},
+  {word:'subscribe',weight:'LOW'},{word:'confirm',weight:'LOW'},{word:'account',weight:'LOW'},
+  {word:'suspended',weight:'HIGH'},{word:'blocked',weight:'HIGH'},{word:'reward',weight:'MED'},
+  {word:'voucher',weight:'MED'},{word:'earn',weight:'MED'},{word:'money',weight:'MED'},
+  {word:'crypto',weight:'MED'},{word:'refund',weight:'MED'},{word:'approved',weight:'MED'},
+  {word:'warning',weight:'HIGH'},{word:'alert',weight:'HIGH'},{word:'text',weight:'LOW'},
+  {word:'reply',weight:'LOW'},{word:'stop',weight:'LOW'},{word:'meds',weight:'HIGH'},
+  {word:'delivery',weight:'LOW'},
+];
+const HAM_KW=[
+  {word:'thanks',weight:'MED'},{word:'lunch',weight:'MED'},{word:'meeting',weight:'MED'},
+  {word:'coffee',weight:'MED'},{word:'birthday',weight:'LOW'},{word:'home',weight:'LOW'},
+  {word:'tomorrow',weight:'LOW'},{word:'see you',weight:'MED'},{word:'let me know',weight:'MED'},
+  {word:'how are',weight:'MED'},{word:'weekend',weight:'LOW'},{word:'sorry',weight:'LOW'},
+  {word:'forgot',weight:'LOW'},{word:'office',weight:'LOW'},{word:'dinner',weight:'LOW'},
+];
 
-/* ══════════════════════════════════════════════════════
-   TOKENIZE
-══════════════════════════════════════════════════════ */
-function tokenize(text) {
-  return text.split(/\s+/).filter(w => w.length > 1);
+/* ════════════════════════════════════════
+   ML ENGINE
+════════════════════════════════════════ */
+function preprocess(text){
+  let t=text.toLowerCase();
+  t=t.replace(/https?:\/\/\S+|www\.\S+/g,' URL ');
+  t=t.replace(/[\+]?(\d[\s\-\(\)]?){7,}\d/g,' PHONE ');
+  t=t.replace(/[£$€]/g,' CURRENCY ');
+  t=t.replace(/\d+/g,' NUM ');
+  t=t.replace(/[^\w\s]/g,' ');
+  return t.replace(/\s+/g,' ').trim();
 }
-
-function getNgrams(tokens, n) {
-  const ng = [...tokens];
-  if (n === 2) {
-    for (let i = 0; i < tokens.length - 1; i++) ng.push(tokens[i] + ' ' + tokens[i+1]);
-  }
+function tokenize(text){return text.split(/\s+/).filter(w=>w.length>1);}
+function getNgrams(tokens,n){
+  const ng=[...tokens];
+  if(n===2)for(let i=0;i<tokens.length-1;i++)ng.push(tokens[i]+' '+tokens[i+1]);
   return ng;
 }
-
-/* ══════════════════════════════════════════════════════
-   VECTORIZER (CountVectorizer style)
-══════════════════════════════════════════════════════ */
-class CountVectorizer {
-  constructor(maxFeatures = 3000, ngram = 2) {
-    this.maxFeatures = maxFeatures;
-    this.ngram = ngram;
-    this.vocab = null;
-    this.vocabIndex = null;
-  }
-
-  fit(corpus) {
-    const freq = {};
-    corpus.forEach(doc => {
-      const tokens = getNgrams(tokenize(preprocess(doc)), this.ngram);
-      const seen = new Set(tokens);
-      seen.forEach(t => { freq[t] = (freq[t] || 0) + 1; });
-    });
-    const sorted = Object.entries(freq)
-      .sort((a,b) => b[1]-a[1])
-      .slice(0, this.maxFeatures)
-      .map(([t]) => t);
-    this.vocab = sorted;
-    this.vocabIndex = Object.fromEntries(sorted.map((t,i) => [t,i]));
+class CountVectorizer{
+  constructor(maxF=3000,ng=2){this.maxF=maxF;this.ng=ng;this.vocab=null;this.vocabIndex=null;}
+  fit(corpus){
+    const freq={};
+    corpus.forEach(doc=>{new Set(getNgrams(tokenize(preprocess(doc)),this.ng)).forEach(t=>{freq[t]=(freq[t]||0)+1;});});
+    this.vocab=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,this.maxF).map(([t])=>t);
+    this.vocabIndex=Object.fromEntries(this.vocab.map((t,i)=>[t,i]));
     return this;
   }
-
-  transform(doc) {
-    const vec = new Float32Array(this.vocab.length);
-    const tokens = getNgrams(tokenize(preprocess(doc)), this.ngram);
-    tokens.forEach(t => {
-      if (this.vocabIndex[t] !== undefined) vec[this.vocabIndex[t]]++;
-    });
+  transform(doc){
+    const vec=new Float32Array(this.vocab.length);
+    getNgrams(tokenize(preprocess(doc)),this.ng).forEach(t=>{if(this.vocabIndex[t]!==undefined)vec[this.vocabIndex[t]]++;});
     return vec;
   }
 }
-
-class TfidfVectorizer extends CountVectorizer {
-  constructor(maxFeatures, ngram) { super(maxFeatures, ngram); this.idf = null; }
-
-  fit(corpus) {
-    super.fit(corpus);
-    const N = corpus.length;
-    this.idf = new Float32Array(this.vocab.length);
-    const df = new Float32Array(this.vocab.length);
-    corpus.forEach(doc => {
-      const tokens = new Set(getNgrams(tokenize(preprocess(doc)), this.ngram));
-      tokens.forEach(t => { if (this.vocabIndex[t] !== undefined) df[this.vocabIndex[t]]++; });
-    });
-    this.idf = df.map(d => Math.log((N + 1) / (d + 1)) + 1);
-    return this;
+class TfidfVectorizer extends CountVectorizer{
+  constructor(mF,ng){super(mF,ng);this.idf=null;}
+  fit(corpus){
+    super.fit(corpus);const N=corpus.length;const df=new Float32Array(this.vocab.length);
+    corpus.forEach(doc=>{new Set(getNgrams(tokenize(preprocess(doc)),this.ng)).forEach(t=>{if(this.vocabIndex[t]!==undefined)df[this.vocabIndex[t]]++;});});
+    this.idf=df.map(d=>Math.log((N+1)/(d+1))+1);return this;
   }
-
-  transform(doc) {
-    const tf = super.transform(doc);
-    const tfidf = tf.map((v,i) => v * this.idf[i]);
-    const norm = Math.sqrt(tfidf.reduce((s,v) => s + v*v, 0)) || 1;
-    return tfidf.map(v => v / norm);
+  transform(doc){
+    const tf=super.transform(doc),tfidf=tf.map((v,i)=>v*this.idf[i]);
+    const norm=Math.sqrt(tfidf.reduce((s,v)=>s+v*v,0))||1;
+    return tfidf.map(v=>v/norm);
   }
 }
-
-/* ══════════════════════════════════════════════════════
-   NAIVE BAYES (Multinomial)
-══════════════════════════════════════════════════════ */
-class NaiveBayes {
-  constructor(alpha = 1.0) { this.alpha = alpha; }
-
-  fit(X, y) {
-    const classes = [...new Set(y)].sort();
-    this.classes = classes;
-    this.logPrior = {};
-    this.logLikelihood = {};
-    const n = y.length, nFeats = X[0].length;
-    classes.forEach(c => {
-      const idxs = y.reduce((a,lbl,i) => { if(lbl===c) a.push(i); return a; }, []);
-      this.logPrior[c] = Math.log(idxs.length / n);
-      const counts = new Float64Array(nFeats);
-      idxs.forEach(i => X[i].forEach((v,j) => counts[j] += v));
-      const total = counts.reduce((s,v) => s+v, 0) + this.alpha * nFeats;
-      this.logLikelihood[c] = counts.map(v => Math.log((v + this.alpha) / total));
-    });
-    return this;
+class NaiveBayes{
+  constructor(a=1.0){this.alpha=a;}
+  fit(X,y){
+    this.classes=[...new Set(y)].sort();this.logPrior={};this.logLikelihood={};
+    const n=y.length,nF=X[0].length;
+    this.classes.forEach(c=>{
+      const idxs=y.reduce((a,l,i)=>{if(l===c)a.push(i);return a;},[]);
+      this.logPrior[c]=Math.log(idxs.length/n);
+      const counts=new Float64Array(nF);
+      idxs.forEach(i=>X[i].forEach((v,j)=>counts[j]+=v));
+      const total=counts.reduce((s,v)=>s+v,0)+this.alpha*nF;
+      this.logLikelihood[c]=counts.map(v=>Math.log((v+this.alpha)/total));
+    });return this;
   }
-
-  predictProba(x) {
-    const scores = {};
-    this.classes.forEach(c => {
-      let s = this.logPrior[c];
-      x.forEach((v,j) => { if(v > 0) s += v * this.logLikelihood[c][j]; });
-      scores[c] = s;
-    });
-    // softmax
-    const maxS = Math.max(...Object.values(scores));
-    const exps = {}; let sumExp = 0;
-    this.classes.forEach(c => { exps[c] = Math.exp(scores[c] - maxS); sumExp += exps[c]; });
-    const proba = {};
-    this.classes.forEach(c => proba[c] = exps[c] / sumExp);
-    return proba;
+  predictProba(x){
+    const scores={};
+    this.classes.forEach(c=>{let s=this.logPrior[c];x.forEach((v,j)=>{if(v>0)s+=v*this.logLikelihood[c][j];});scores[c]=s;});
+    const maxS=Math.max(...Object.values(scores));const exps={};let sum=0;
+    this.classes.forEach(c=>{exps[c]=Math.exp(scores[c]-maxS);sum+=exps[c];});
+    const p={};this.classes.forEach(c=>p[c]=exps[c]/sum);return p;
   }
-
-  predict(x) {
-    const p = this.predictProba(x);
-    return +Object.entries(p).sort((a,b) => b[1]-a[1])[0][0];
-  }
+  predict(x){const p=this.predictProba(x);return+Object.entries(p).sort((a,b)=>b[1]-a[1])[0][0];}
 }
-
-/* ══════════════════════════════════════════════════════
-   LOGISTIC REGRESSION (simple SGD)
-══════════════════════════════════════════════════════ */
-class LogisticRegression {
-  constructor(lr=0.1, epochs=100, C=1.0) { this.lr=lr; this.epochs=epochs; this.C=C; }
-
-  sigmoid(z) { return 1 / (1 + Math.exp(-Math.max(-500, Math.min(500, z)))); }
-
-  fit(X, y) {
-    const n = X.length, d = X[0].length;
-    this.w = new Float64Array(d);
-    this.b = 0;
-    for (let e = 0; e < this.epochs; e++) {
-      // shuffle
-      const idx = Array.from({length:n}, (_,i)=>i).sort(()=>Math.random()-.5);
-      idx.forEach(i => {
-        const z = X[i].reduce((s,v,j) => s + v*this.w[j], this.b);
-        const pred = this.sigmoid(z);
-        const err = pred - y[i];
-        this.w.forEach((_,j) => {
-          this.w[j] -= this.lr * (err * X[i][j] + this.w[j] / (this.C * n));
-        });
-        this.b -= this.lr * err;
+class LogisticRegression{
+  constructor(lr=0.1,ep=100,C=1.0){this.lr=lr;this.epochs=ep;this.C=C;}
+  sigmoid(z){return 1/(1+Math.exp(-Math.max(-500,Math.min(500,z))));}
+  fit(X,y){
+    const n=X.length,d=X[0].length;this.w=new Float64Array(d);this.b=0;
+    for(let e=0;e<this.epochs;e++){
+      Array.from({length:n},(_,i)=>i).sort(()=>Math.random()-.5).forEach(i=>{
+        const z=X[i].reduce((s,v,j)=>s+v*this.w[j],this.b);
+        const err=this.sigmoid(z)-y[i];
+        this.w.forEach((_,j)=>{this.w[j]-=this.lr*(err*X[i][j]+this.w[j]/(this.C*n));});
+        this.b-=this.lr*err;
       });
-    }
-    return this;
+    }return this;
   }
-
-  predictProba(x) {
-    const z = x.reduce((s,v,j) => s + v*this.w[j], this.b);
-    const p1 = this.sigmoid(z);
-    return { 0: 1-p1, 1: p1 };
-  }
-
-  predict(x) { return this.predictProba(x)[1] >= 0.5 ? 1 : 0; }
+  predictProba(x){const z=x.reduce((s,v,j)=>s+v*this.w[j],this.b);const p1=this.sigmoid(z);return{0:1-p1,1:p1};}
+  predict(x){return this.predictProba(x)[1]>=0.5?1:0;}
 }
-
-/* ══════════════════════════════════════════════════════
-   METRICS
-══════════════════════════════════════════════════════ */
-function metrics(yTrue, yPred) {
+function metrics(yTrue,yPred){
   let tp=0,fp=0,fn=0,tn=0;
-  yTrue.forEach((y,i) => {
-    if(y===1 && yPred[i]===1) tp++;
-    else if(y===0 && yPred[i]===1) fp++;
-    else if(y===1 && yPred[i]===0) fn++;
-    else tn++;
-  });
-  const prec = tp/(tp+fp) || 0;
-  const rec  = tp/(tp+fn) || 0;
-  const f1   = 2*prec*rec/(prec+rec) || 0;
-  const acc  = (tp+tn)/yTrue.length;
-  return { accuracy:acc, precision:prec, recall:rec, f1, tp, fp, fn, tn };
+  yTrue.forEach((y,i)=>{if(y===1&&yPred[i]===1)tp++;else if(y===0&&yPred[i]===1)fp++;else if(y===1&&yPred[i]===0)fn++;else tn++;});
+  const prec=tp/(tp+fp)||0,rec=tp/(tp+fn)||0,f1=2*prec*rec/(prec+rec)||0;
+  return{accuracy:(tp+tn)/yTrue.length,precision:prec,recall:rec,f1,tp,fp,fn,tn};
 }
 
-/* ══════════════════════════════════════════════════════
-   TRAIN/TEST SPLIT
-══════════════════════════════════════════════════════ */
-function splitData(X, y, testSize=0.25, seed=42) {
-  // deterministic shuffle
-  const idx = Array.from({length:X.length}, (_,i)=>i);
-  let s = seed;
-  const rng = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
-  idx.sort(() => rng() - 0.5);
-  const split = Math.floor(X.length * (1 - testSize));
-  const trainIdx = idx.slice(0, split);
-  const testIdx  = idx.slice(split);
-  return {
-    XTrain: trainIdx.map(i => X[i]), yTrain: trainIdx.map(i => y[i]),
-    XTest:  testIdx.map(i => X[i]),  yTest:  testIdx.map(i => y[i]),
-    testTexts: testIdx.map(i => (y[i]===1 ? SPAM : HAM)[0]) // placeholder
-  };
-}
+let bestVec=null,bestClf=null,trainedModels={};
+let userSpam=[...SPAM],userHam=[...HAM];
+let recentAdded=[];
 
-/* ══════════════════════════════════════════════════════
-   GLOBAL STATE
-══════════════════════════════════════════════════════ */
-let trainedModels = {};
-let bestVec = null;
-let bestClf = null;
-let allDocs = [], allLabels = [];
-
-/* ══════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    LOGGING
-══════════════════════════════════════════════════════ */
-function log(msg, type='') {
-  const el = document.getElementById('trainLog');
-  const line = document.createElement('div');
-  line.className = 'log-line ' + type;
-  line.textContent = '> ' + msg;
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
+════════════════════════════════════════ */
+function log(msg,type=''){
+  const el=document.getElementById('trainLog');
+  const d=document.createElement('div');
+  d.className='log-line'+(type?' log-'+type:'');
+  d.textContent='> '+msg;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
 }
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-/* ══════════════════════════════════════════════════════
-   DATASET MANAGER
-══════════════════════════════════════════════════════ */
-// Mutable working copies so users can add to them
-let userSpam = [...SPAM];
-let userHam  = [...HAM];
-let recentlyAdded = [];
-
-function updateCounts() {
-  document.getElementById('spamCount').textContent  = userSpam.length;
-  document.getElementById('hamCount').textContent   = userHam.length;
-  document.getElementById('totalCount').textContent = userSpam.length + userHam.length;
+/* ════════════════════════════════════════
+   DATASET OPS
+════════════════════════════════════════ */
+function updateCounts(){
+  document.getElementById('dSpam').textContent=userSpam.length;
+  document.getElementById('dHam').textContent=userHam.length;
+  document.getElementById('dTotal').textContent=userSpam.length+userHam.length;
 }
-
-function toggleAddPanel() {
-  const p = document.getElementById('addPanel');
-  const btn = document.getElementById('addToggleBtn');
-  const open = p.style.display === 'none';
-  p.style.display = open ? 'block' : 'none';
-  btn.textContent = open ? '✕ Close' : '＋ Add messages';
+function toggleAdd(){
+  const p=document.getElementById('addPanel'),b=document.getElementById('addToggle');
+  const open=p.style.display==='none';
+  p.style.display=open?'block':'none';
+  b.textContent=open?'✕ Close':'＋ Add messages';
 }
-
-function addMessage(label) {
-  const input = document.getElementById('newMsgInput');
-  const text = input.value.trim();
-  if (!text) return;
-  if (label === 'spam') userSpam.push(text);
-  else userHam.push(text);
-  recentlyAdded.unshift({ text, label });
-  input.value = '';
-  updateCounts();
-  renderRecentlyAdded();
-  showFeedback(`✓ Added as ${label.toUpperCase()}`);
+function addMsg(label){
+  const inp=document.getElementById('newMsg'),text=inp.value.trim();
+  if(!text)return;
+  (label==='spam'?userSpam:userHam).push(text);
+  recentAdded.unshift({text,label});inp.value='';updateCounts();renderRecent();showFb('✓ Added as '+label.toUpperCase());
 }
-
-function bulkAdd(label) {
-  const ta = document.getElementById(label === 'spam' ? 'bulkSpam' : 'bulkHam');
-  const lines = ta.value.split('\n').map(l=>l.trim()).filter(l=>l.length > 3);
-  if (!lines.length) return;
-  lines.forEach(text => {
-    if (label === 'spam') userSpam.push(text);
-    else userHam.push(text);
-    recentlyAdded.unshift({ text, label });
-  });
-  ta.value = '';
-  updateCounts();
-  renderRecentlyAdded();
-  showFeedback(`✓ Added ${lines.length} ${label.toUpperCase()} messages`);
+function bulkAdd(label){
+  const ta=document.getElementById(label==='spam'?'bulkSpam':'bulkHam');
+  const lines=ta.value.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
+  if(!lines.length)return;
+  lines.forEach(text=>{(label==='spam'?userSpam:userHam).push(text);recentAdded.unshift({text,label});});
+  ta.value='';updateCounts();renderRecent();showFb('✓ Added '+lines.length+' '+label.toUpperCase()+' messages');
 }
-
-function removeAdded(idx) {
-  const item = recentlyAdded[idx];
-  if (item.label === 'spam') {
-    const i = userSpam.lastIndexOf(item.text);
-    if (i !== -1) userSpam.splice(i, 1);
-  } else {
-    const i = userHam.lastIndexOf(item.text);
-    if (i !== -1) userHam.splice(i, 1);
-  }
-  recentlyAdded.splice(idx, 1);
-  updateCounts();
-  renderRecentlyAdded();
+function renderRecent(){
+  const c=document.getElementById('recentList'),it=document.getElementById('recentItems');
+  if(!recentAdded.length){c.style.display='none';return;}
+  c.style.display='block';
+  it.innerHTML=recentAdded.slice(0,8).map((item,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;background:var(--panel2);border-radius:8px;padding:5px 9px">
+      <span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;flex-shrink:0;
+        background:${item.label==='spam'?'var(--red-dim)':'var(--green-dim)'};
+        color:${item.label==='spam'?'#ff7090':'#30e890'}">${item.label.toUpperCase()}</span>
+      <span style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.text}</span>
+      <button onclick="removeAdded(${i})" style="font-size:11px;padding:1px 6px;color:var(--muted);border:1px solid var(--border);background:transparent;border-radius:5px">✕</button>
+    </div>`).join('');
 }
-
-function renderRecentlyAdded() {
-  const container = document.getElementById('addedList');
-  const items = document.getElementById('addedItems');
-  if (!recentlyAdded.length) { container.style.display = 'none'; return; }
-  container.style.display = 'block';
-  items.innerHTML = recentlyAdded.slice(0,10).map((item, i) => `
-    <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:7px;padding:5px 8px;">
-      <span style="font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:5px;flex-shrink:0;
-        background:${item.label==='spam'?'var(--spam-dim)':'var(--ham-dim)'};
-        color:${item.label==='spam'?'var(--spam)':'var(--ham)'};">${item.label.toUpperCase()}</span>
-      <span style="font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.text}</span>
-      <button onclick="removeAdded(${i})" style="font-size:12px;padding:2px 7px;color:var(--muted);border-color:var(--border);background:transparent;flex-shrink:0;">✕</button>
-    </div>
-  `).join('');
+function removeAdded(idx){
+  const item=recentAdded[idx];
+  const arr=item.label==='spam'?userSpam:userHam;
+  const i=arr.lastIndexOf(item.text);if(i!==-1)arr.splice(i,1);
+  recentAdded.splice(idx,1);updateCounts();renderRecent();
 }
+function showFb(msg){const el=document.getElementById('addFeedback');el.textContent=msg;setTimeout(()=>el.textContent='',2500);}
 
-function showFeedback(msg) {
-  const el = document.getElementById('addFeedback');
-  el.textContent = msg;
-  setTimeout(() => el.textContent = '', 2500);
-}
+/* ════════════════════════════════════════
+   TRAINING
+════════════════════════════════════════ */
+async function runTraining(){
+  const btn=document.getElementById('trainBtn');
+  btn.disabled=true;btn.innerHTML='<span>⟳</span> Training…';
+  document.getElementById('trainLog').innerHTML='';
 
+  log('Loading dataset…','info');await delay(200);
+  const all=[...userSpam.map(t=>({text:t,label:1})),...userHam.map(t=>({text:t,label:0}))];
+  let s=42;const rng=()=>{s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/0xffffffff;};
+  all.sort(()=>rng()-.5);
+  document.getElementById('pipeDs').textContent=all.length+' msgs';
+  log(`Dataset: ${all.length} messages (${userSpam.length} spam, ${userHam.length} ham)`,'ok');await delay(150);
 
-async function runTraining() {
-  const btn = document.getElementById('trainBtn');
-  btn.disabled = true; btn.textContent = 'Training…';
-  document.getElementById('trainLog').innerHTML = '';
+  log('Preprocessing…','info');await delay(300);
+  const processed=all.map(d=>preprocess(d.text));
+  const labels=all.map(d=>d.label);
+  log('Preprocessing complete.','ok');await delay(100);
 
-  // 1. Load dataset
-  log('Loading dataset…', 'info');
-  await delay(200);
-  allDocs = [...userSpam.map(t=>({text:t,label:1})), ...userHam.map(t=>({text:t,label:0}))];
-  // shuffle deterministically
-  let s = 42;
-  const rng = () => { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; };
-  allDocs.sort(() => rng() - 0.5);
-  log(`Dataset loaded: ${allDocs.length} messages (${userSpam.length} spam, ${userHam.length} ham)`, 'ok');
-  document.getElementById('spamCount').textContent  = userSpam.length;
-  document.getElementById('hamCount').textContent   = userHam.length;
-  document.getElementById('totalCount').textContent = allDocs.length;
-  await delay(150);
+  const split=Math.floor(all.length*0.75);
+  const XTr=processed.slice(0,split),yTr=labels.slice(0,split);
+  const XTe=processed.slice(split),yTe=labels.slice(split);
+  log(`Split: ${XTr.length} train / ${XTe.length} test`,'ok');await delay(100);
 
-  // 2. Preprocess
-  log('Preprocessing: lowercase → URL/PHONE/CURRENCY masking → digits → punctuation…', 'info');
-  await delay(300);
-  const processed = allDocs.map(d => preprocess(d.text));
-  const labels = allDocs.map(d => d.label);
-  log('Preprocessing complete.', 'ok');
-  await delay(100);
+  log('Fitting TF-IDF vectorizer…','info');await delay(300);
+  const tfidf=new TfidfVectorizer(3000,2).fit([...XTr,...XTe]);
+  log(`Vocab: ${tfidf.vocab.length} tokens`,'ok');
+  log('Fitting CountVectorizer…','info');await delay(200);
+  const cv=new CountVectorizer(3000,2).fit([...XTr,...XTe]);
 
-  // 3. Split
-  log('Splitting 75% train / 25% test (stratified)…', 'info');
-  await delay(200);
-  const split = Math.floor(allDocs.length * 0.75);
-  const XTrain = processed.slice(0, split);
-  const yTrain = labels.slice(0, split);
-  const XTest  = processed.slice(split);
-  const yTest  = labels.slice(split);
-  log(`Train: ${XTrain.length}  Test: ${XTest.length}`, 'ok');
-  await delay(100);
+  const XTrTf=XTr.map(d=>tfidf.transform(d)),XTeTf=XTe.map(d=>tfidf.transform(d));
+  const XTrCv=XTr.map(d=>cv.transform(d)),XTeCv=XTe.map(d=>cv.transform(d));
 
-  // 4. Build vectorizers
-  log('Fitting TF-IDF vectorizer (unigrams + bigrams, max 3000 features)…', 'info');
-  await delay(300);
-  const tfidf = new TfidfVectorizer(3000, 2).fit([...XTrain, ...XTest]);
-  log(`Vocabulary size: ${tfidf.vocab.length} tokens`, 'ok');
-
-  log('Fitting CountVectorizer (unigrams + bigrams, max 3000 features)…', 'info');
-  await delay(200);
-  const cv = new CountVectorizer(3000, 2).fit([...XTrain, ...XTest]);
-
-  // vectorise
-  const XTrainTf  = XTrain.map(d => tfidf.transform(d));
-  const XTestTf   = XTest.map(d  => tfidf.transform(d));
-  const XTrainCv  = XTrain.map(d => cv.transform(d));
-  const XTestCv   = XTest.map(d  => cv.transform(d));
-  await delay(100);
-
-  // 5. Train models
-  const configs = [
-    { name:'Naive Bayes (TF-IDF)',        vec:tfidf, clf:new NaiveBayes(0.5),           Xtrain:XTrainTf, Xtest:XTestTf },
-    { name:'Naive Bayes (CountVec)',       vec:cv,    clf:new NaiveBayes(0.5),           Xtrain:XTrainCv, Xtest:XTestCv },
-    { name:'Logistic Regression (TF-IDF)',vec:tfidf, clf:new LogisticRegression(0.1,80,1.0), Xtrain:XTrainTf, Xtest:XTestTf },
+  const configs=[
+    {name:'Naive Bayes (TF-IDF)',vec:tfidf,clf:new NaiveBayes(0.5),Xtr:XTrTf,Xte:XTeTf},
+    {name:'Naive Bayes (CountVec)',vec:cv,clf:new NaiveBayes(0.5),Xtr:XTrCv,Xte:XTeCv},
+    {name:'Logistic Regression (TF-IDF)',vec:tfidf,clf:new LogisticRegression(0.1,80,1.0),Xtr:XTrTf,Xte:XTeTf},
   ];
 
-  let bestF1 = -1;
-  for (const cfg of configs) {
-    log(`Training ${cfg.name}…`, 'info');
-    await delay(300);
-    cfg.clf.fit(cfg.Xtrain, yTrain);
-    const yPred = cfg.Xtest.map(x => cfg.clf.predict(x));
-    cfg.m = metrics(yTest, yPred);
-    cfg.yPred = yPred;
-    log(`${cfg.name} — Accuracy:${(cfg.m.accuracy*100).toFixed(1)}%  Precision:${(cfg.m.precision*100).toFixed(1)}%  Recall:${(cfg.m.recall*100).toFixed(1)}%  F1:${(cfg.m.f1*100).toFixed(1)}%`, 'ok');
-    if (cfg.m.f1 > bestF1) { bestF1=cfg.m.f1; bestVec=cfg.vec; bestClf=cfg.clf; }
-    trainedModels[cfg.name] = cfg;
-    await delay(100);
+  let bestF1=-1;
+  for(const cfg of configs){
+    log(`Training ${cfg.name}…`,'info');await delay(300);
+    cfg.clf.fit(cfg.Xtr,yTr);
+    const yPred=cfg.Xte.map(x=>cfg.clf.predict(x));
+    cfg.m=metrics(yTe,yPred);cfg.yPred=yPred;
+    log(`${cfg.name} — Acc:${(cfg.m.accuracy*100).toFixed(1)}% P:${(cfg.m.precision*100).toFixed(1)}% R:${(cfg.m.recall*100).toFixed(1)}% F1:${(cfg.m.f1*100).toFixed(1)}%`,'ok');
+    if(cfg.m.f1>bestF1){bestF1=cfg.m.f1;bestVec=cfg.vec;bestClf=cfg.clf;}
+    trainedModels[cfg.name]=cfg;await delay(100);
   }
 
-  log(`Best model saved to pipeline (F1=${(bestF1*100).toFixed(1)}%)`, 'warn');
-  await delay(100);
-  log('Pipeline ready. ✓', 'ok');
+  log(`Best model saved (F1=${(bestF1*100).toFixed(1)}%)`,'warn');
+  log('Pipeline ready. ✓','ok');
 
-  document.getElementById('headerStatus').textContent = 'Pipeline ready';
-  btn.textContent = '✓ Retrain'; btn.disabled = false;
+  // header badges
+  const sb=document.getElementById('statusBadge');
+  sb.classList.add('live');
+  document.getElementById('statusText').textContent='LIVE';
+  document.getElementById('modelBadge').textContent='F1: '+(bestF1*100).toFixed(1)+'%';
+  document.getElementById('clfBadge').textContent='model ready';
+  document.getElementById('clfBadge').classList.add('ready');
 
-  // Populate training summary cards
-  document.getElementById('trainTotal').textContent = allDocs.length;
-  document.getElementById('trainSpam').textContent  = userSpam.length;
-  document.getElementById('trainHam').textContent   = userHam.length;
-  document.getElementById('trainSplit').textContent = Math.floor(allDocs.length*0.75)+'/'+Math.ceil(allDocs.length*0.25);
+  btn.innerHTML='<span>↺</span> Retrain';btn.disabled=false;btn.classList.add('ready');
+  document.getElementById('classifyBtn').disabled=false;
 
-  // Render UI sections
-  showSection('statsSection');
-  showPreprocDemo(allDocs);
+  // Animate pipeline steps green
+  document.querySelectorAll('.pipe-step').forEach(s=>s.classList.add('active-step'));
+  setTimeout(()=>document.querySelectorAll('.pipe-step').forEach(s=>s.classList.remove('active-step')),1500);
+
+  // results
+  const bm=Object.values(trainedModels).sort((a,b)=>b.m.f1-a.m.f1)[0].m;
+  document.getElementById('rs1').textContent=all.length;
+  document.getElementById('rs2').textContent=userSpam.length;
+  document.getElementById('rs3').textContent=userHam.length;
+  document.getElementById('rs4').textContent=split+'/'+(all.length-split);
   renderModels(trainedModels);
+  const bCfg=configs.find(c=>bestClf===c.clf)||configs[0];
+  renderCM(bCfg.m);
   renderFeats('spam');
-  renderExamples(XTest, yTest, allDocs.slice(split));
-  showSection('predictSection');
+  renderExamples(XTeCv,yTe,all.slice(split));
+  showPreprocDemo(all);
+
+  // hero quick stats
+  document.getElementById('quickStatGrid').innerHTML=`
+    <div class="metric-item m-green"><div class="metric-val" style="color:var(--green)">${(bm.accuracy*100).toFixed(1)}%</div><div class="metric-lbl">Accuracy</div></div>
+    <div class="metric-item m-blue"><div class="metric-val" style="color:var(--blue)">${(bm.precision*100).toFixed(1)}%</div><div class="metric-lbl">Precision</div></div>
+    <div class="metric-item m-gold"><div class="metric-val" style="color:var(--gold)">${(bm.recall*100).toFixed(1)}%</div><div class="metric-lbl">Recall</div></div>
+    <div class="metric-item m-violet"><div class="metric-val" style="color:var(--violet)">${(bm.f1*100).toFixed(1)}%</div><div class="metric-lbl">F1 Score</div></div>`;
+  document.getElementById('quickStats').style.display='block';
 }
 
-function showSection(id) {
-  const el = document.getElementById(id);
-  el.style.display = 'block';
-  el.style.animation = 'fadeIn .4s ease';
-}
-
-/* ══════════════════════════════════════════════════════
-   PREPROCESSING DEMO
-══════════════════════════════════════════════════════ */
-function showPreprocDemo(docs) {
-  const samples = [
-    docs.find(d=>d.label===1 && d.text.includes('£')),
-    docs.find(d=>d.label===1 && /\d{7,}/.test(d.text)),
+/* ════════════════════════════════════════
+   PREPROC DEMO
+════════════════════════════════════════ */
+function showPreprocDemo(docs){
+  const samples=[
+    docs.find(d=>d.label===1&&d.text.includes('£')),
+    docs.find(d=>d.label===1&&/\d{7,}/.test(d.text)),
     docs.find(d=>d.label===0),
   ].filter(Boolean).slice(0,3);
-
-  const demo = document.getElementById('preprocDemo');
-  demo.innerHTML = samples.map(s => {
-    const clean = preprocess(s.text);
-    const highlighted = clean
-      .replace(/URL/g, '<span class="hl">URL</span>')
-      .replace(/PHONE/g, '<span class="hl">PHONE</span>')
-      .replace(/CURRENCY/g, '<span class="hl">CURRENCY</span>')
-      .replace(/\bNUM\b/g, '<span class="hl">NUM</span>');
+  document.getElementById('preprocDemo').innerHTML=samples.map(s=>{
+    const clean=preprocess(s.text);
+    const hl=clean.replace(/URL/g,'<span class="hl">URL</span>').replace(/PHONE/g,'<span class="hl">PHONE</span>').replace(/CURRENCY/g,'<span class="hl">CURRENCY</span>').replace(/\bNUM\b/g,'<span class="hl">NUM</span>');
     return `<div class="preproc-row">
-      <span class="preproc-tag in">${s.label===1?'SPAM':'HAM'}</span>
+      <span class="ptag ${s.label===1?'s':'h'}">${s.label===1?'SPAM':'HAM'}</span>
       <div>
-        <div class="preproc-text" style="color:var(--muted)">${s.text.slice(0,90)}${s.text.length>90?'…':''}</div>
-        <div class="preproc-text" style="margin-top:4px;">→ ${highlighted.slice(0,90)}${highlighted.length>90?'…':''}</div>
+        <div style="color:var(--muted)">${s.text.slice(0,90)}${s.text.length>90?'…':''}</div>
+        <div style="margin-top:4px">→ ${hl.slice(0,110)}${hl.length>110?'…':''}</div>
       </div>
     </div>`;
   }).join('');
-  showSection('preprocSection');
+  document.getElementById('preprocSection').style.display='block';
 }
 
-/* ══════════════════════════════════════════════════════
-   MODEL GRID
-══════════════════════════════════════════════════════ */
-function renderModels(models) {
-  const grid = document.getElementById('modelGrid');
-  const best = Object.entries(models).sort((a,b) => b[1].m.f1 - a[1].m.f1)[0][0];
-  grid.innerHTML = '';
-  Object.entries(models).forEach(([name, cfg]) => {
-    const m = cfg.m;
-    const isBest = name === best;
-    const bars = [
-      { l:'Accuracy',  v:m.accuracy,  c:'#00c896' },
-      { l:'Precision', v:m.precision, c:'#4da6ff' },
-      { l:'Recall',    v:m.recall,    c:'#f0c040' },
-      { l:'F1 Score',  v:m.f1,        c:'#ff8c66' },
-    ];
-    const card = document.createElement('div');
-    card.className = 'model-card' + (isBest ? ' winner' : '');
-    card.innerHTML = `
-      <div class="model-name">${name}</div>
-      ${isBest ? '<div class="winner-badge">★ Best model</div>' : ''}
-      <div class="metric-row">
-        ${bars.map(b => `<div class="mbar">
-          <span class="mbar-label">${b.l}</span>
-          <div class="mbar-track"><div class="mbar-fill" data-w="${Math.round(b.v*100)}" style="background:${b.c};width:0%"></div></div>
-          <span class="mbar-val">${Math.round(b.v*100)}%</span>
-        </div>`).join('')}
-      </div>
-    `;
+/* ════════════════════════════════════════
+   MODELS
+════════════════════════════════════════ */
+function renderModels(models){
+  const grid=document.getElementById('modelGrid');
+  const bestName=Object.entries(models).sort((a,b)=>b[1].m.f1-a[1].m.f1)[0][0];
+  grid.innerHTML='';
+  Object.entries(models).forEach(([name,cfg],i)=>{
+    const m=cfg.m,isBest=name===bestName;
+    const bars=[{l:'Accuracy',v:m.accuracy,c:'#00d97e'},{l:'Precision',v:m.precision,c:'#3d9cf5'},{l:'Recall',v:m.recall,c:'#f5c842'},{l:'F1',v:m.f1,c:'#ff7eb3'}];
+    const card=document.createElement('div');
+    card.className='model-card'+(isBest?' best':'');
+    card.style.animationDelay=(i*.1)+'s';
+    card.innerHTML=`<div class="model-name">${name}</div>${isBest?'<div class="best-tag">★ Best model</div>':''}<div>${bars.map(b=>`<div class="mbar"><span class="mbar-l">${b.l}</span><div class="mbar-t"><div class="mbar-f" data-w="${Math.round(b.v*100)}" style="background:${b.c}"></div></div><span class="mbar-v">${Math.round(b.v*100)}%</span></div>`).join('')}</div>`;
     grid.appendChild(card);
   });
-  showSection('modelsSection');
-  showSection('detailSection');
-  // animate bars
-  setTimeout(() => {
-    document.querySelectorAll('.mbar-fill').forEach(el => {
-      el.style.width = el.dataset.w + '%';
-    });
-  }, 100);
+  setTimeout(()=>document.querySelectorAll('.mbar-f').forEach(el=>el.style.width=el.dataset.w+'%'),100);
 }
 
-/* ══════════════════════════════════════════════════════
-   FEATURE CHIPS
-══════════════════════════════════════════════════════ */
-const SPAM_FEATS = ['FREE','WIN','prize','claim','URGENT','call now','PHONE','CURRENCY','NUM','click','verify','account','guaranteed','offer','selected'];
-const HAM_FEATS  = ['the','can you','just','thanks','see you','let me know','back','meeting','tomorrow','how are','dinner','sorry','hey','home','office'];
-
-function showFeats(type, btn) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  renderFeats(type);
-}
-function renderFeats(type) {
-  const feats = type === 'spam' ? SPAM_FEATS : HAM_FEATS;
-  document.getElementById('featChips').innerHTML = feats.map(f =>
-    `<span class="chip ${type}">${f}</span>`
-  ).join('');
+/* ════════════════════════════════════════
+   CONFUSION MATRIX
+════════════════════════════════════════ */
+function renderCM(m){
+  if(!m)return;
+  ['TN','FP','FN','TP'].forEach(k=>document.getElementById('cm'+k).textContent=m[k.toLowerCase()]);
 }
 
-/* ══════════════════════════════════════════════════════
-   TEST EXAMPLES
-══════════════════════════════════════════════════════ */
-function renderExamples(XTest, yTest, docs) {
-  const list = document.getElementById('exList');
-  list.innerHTML = '';
-  const show = docs.slice(0, 8);
-  show.forEach((doc, i) => {
-    const probas = bestClf.predictProba(XTest[i]);
-    const pred = probas[1] >= 0.5 ? 1 : 0;
-    const prob = probas[1];
-    const correct = pred === yTest[i];
-    const isSpam = pred === 1;
-    const el = document.createElement('div');
-    el.className = 'ex-item';
-    el.innerHTML = `
-      <span class="ex-badge ${isSpam?'spam':'ham'}">${isSpam?'SPAM':'HAM'}</span>
+/* ════════════════════════════════════════
+   FEATURES
+════════════════════════════════════════ */
+const SF=['FREE','WIN','prize','claim','URGENT','call now','PHONE','CURRENCY','NUM','click','verify','account','guaranteed','offer','selected'];
+const HF=['thanks','can you','just','let me know','see you','meeting','tomorrow','how are','dinner','sorry','hey','home','office'];
+function showFeats(type,btn){
+  document.querySelectorAll('.mini-tab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('featChips').innerHTML=(type==='spam'?SF:HF).map((f,i)=>`<span class="feat-chip ${type}" style="animation-delay:${i*.03}s">${f}</span>`).join('');
+}
+function renderFeats(t){showFeats(t,null);document.querySelector('.mini-tab').classList.add('active');}
+
+/* ════════════════════════════════════════
+   EXAMPLES
+════════════════════════════════════════ */
+function renderExamples(XTest,yTest,docs){
+  const list=document.getElementById('exList');
+  list.innerHTML='';
+  docs.slice(0,8).forEach((doc,i)=>{
+    const p=bestClf.predictProba(XTest[i]);
+    const pred=p[1]>=0.5?1:0,prob=p[1],isSpam=pred===1,correct=pred===yTest[i];
+    const el=document.createElement('div');
+    el.className='ex-item';
+    el.innerHTML=`<span class="ex-badge ${isSpam?'spam':'ham'}">${isSpam?'SPAM':'HAM'}</span>
       <div style="flex:1">
-        <div class="ex-text">${doc.text.slice(0,80)}${doc.text.length>80?'…':''}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-          <div style="width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;">
-            <div style="height:100%;width:${Math.round(isSpam?prob*100:(1-prob)*100)}%;background:${isSpam?'var(--spam)':'var(--ham)'};border-radius:2px;"></div>
+        <div style="font-size:13px;line-height:1.5">${doc.text.slice(0,80)}${doc.text.length>80?'…':''}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+          <div style="width:70px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${Math.round(isSpam?prob*100:(1-prob)*100)}%;background:${isSpam?'var(--red)':'var(--green)'};border-radius:2px"></div>
           </div>
-          <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${Math.round(isSpam?prob*100:(1-prob)*100)}% confidence</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">${Math.round(isSpam?prob*100:(1-prob)*100)}% conf</span>
         </div>
       </div>
-      <span class="ex-prob" style="color:${correct?'var(--ham)':'var(--spam)'}">${correct?'✓':'✗'}</span>
-    `;
+      <span style="font-family:var(--mono);font-size:13px;color:${correct?'var(--green)':'var(--red)'}">${correct?'✓':'✗'}</span>`;
     list.appendChild(el);
   });
-  showSection('examplesSection');
 }
 
-/* ══════════════════════════════════════════════════════
-   LIVE CLASSIFY
-══════════════════════════════════════════════════════ */
-function liveClassify() {
-  if (!bestClf || !bestVec) {
-    alert('Please run the training pipeline first!');
-    return;
-  }
-  const msg = document.getElementById('msgInput').value.trim();
-  if (!msg) return;
-
-  const clean = preprocess(msg);
-  const vec = bestVec.transform(clean);
-  const probas = bestClf.predictProba(vec);
-  const spamProb = probas[1];
-  const isSpam = spamProb >= 0.5;
-
-  const panel = document.getElementById('resultPanel');
-  panel.className = 'result-panel ' + (isSpam ? 'spam' : 'ham');
-  panel.style.display = 'block';
-
-  document.getElementById('resultVerdict').textContent = isSpam ? '🚨 SPAM DETECTED' : '✅ Looks like Ham';
-  document.getElementById('resultVerdict').className = 'result-verdict ' + (isSpam ? 'spam' : 'ham');
-  document.getElementById('resultSub').textContent = isSpam
-    ? `High spam probability — contains known spam signals.`
-    : `Low spam probability — matches legitimate message patterns.`;
-  document.getElementById('resultEmoji').textContent = isSpam ? '⚠️' : '💬';
-
-  const pct = Math.round(spamProb * 100);
-  document.getElementById('probPct').textContent = pct + '%';
-  document.getElementById('gaugeFill').style.width = pct + '%';
-  document.getElementById('gaugeFill').style.background = isSpam ? 'var(--spam)' : 'var(--ham)';
-
-  // Show top triggered tokens
-  const tokens = getNgrams(tokenize(clean), 2);
-  const triggered = tokens.filter(t => bestVec.vocabIndex && bestVec.vocabIndex[t] !== undefined).slice(0, 8);
-  document.getElementById('topTokens').innerHTML = triggered.length
-    ? `<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">Triggered tokens:</div>
-       <div style="display:flex;flex-wrap:wrap;gap:4px;">${triggered.map(t=>`<span class="chip ${isSpam?'spam':'ham'}">${t}</span>`).join('')}</div>`
-    : '';
+/* ════════════════════════════════════════
+   LIVE CLASSIFIER
+════════════════════════════════════════ */
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function highlightKeywords(text){
+  const lower=text.toLowerCase();const regions=[];
+  const all=[...SPAM_KW.map(k=>({...k,type:'s'})),...HAM_KW.map(k=>({...k,type:'h'}))];
+  all.forEach(({word,weight,type})=>{
+    let idx=0;
+    while((idx=lower.indexOf(word,idx))!==-1){
+      const before=idx===0||/\W/.test(text[idx-1]);
+      const after=idx+word.length>=text.length||/\W/.test(text[idx+word.length]);
+      if(before&&after)regions.push({start:idx,end:idx+word.length,type,word,weight});
+      idx+=word.length;
+    }
+  });
+  regions.sort((a,b)=>a.start-b.start);
+  const clean=[];let last=0;
+  regions.forEach(r=>{if(r.start>=last){clean.push(r);last=r.end;}});
+  let html='';let pos=0;
+  clean.forEach(r=>{
+    html+=escapeHtml(text.slice(pos,r.start));
+    html+=`<span class="kw-${r.type}">${escapeHtml(text.slice(r.start,r.end))}<span class="kw-tip">${r.weight} ${r.type==='s'?'SPAM':'HAM'} signal</span></span>`;
+    pos=r.end;
+  });
+  html+=escapeHtml(text.slice(pos));
+  return{html,regions:clean};
 }
-
-/* ══════════════════════════════════════════════════════
-   SAMPLE MESSAGES
-══════════════════════════════════════════════════════ */
-function loadSample(type) {
-  const samples = {
-    spam: "CONGRATULATIONS! You've been selected to receive a FREE £500 gift voucher. Call 07000123456 NOW to claim before midnight!",
-    ham: "Hey, are you free this weekend? We're thinking of going hiking on Sunday and wanted to see if you'd like to join us."
+function onInput(){
+  const msg=document.getElementById('msgInput').value.trim();
+  if(bestClf&&msg.length>2)document.getElementById('classifyBtn').disabled=false;
+}
+function liveClassify(){
+  const msg=document.getElementById('msgInput').value.trim();
+  if(!msg)return;
+  if(!bestClf||!bestVec){alert('Please run the training pipeline first (Train section)!');return;}
+  const {html,regions}=highlightKeywords(msg);
+  document.getElementById('hlZone').innerHTML=html||'<span style="color:var(--muted);font-style:italic;font-size:14px">No recognisable keywords found.</span>';
+  document.getElementById('hlPane').style.display='block';
+  const vec=bestVec.transform(preprocess(msg));
+  const probas=bestClf.predictProba(vec);
+  const spamProb=probas[1];
+  const isSpam=spamProb>=0.5;
+  const strip=document.getElementById('resultStrip');
+  strip.className='result-strip '+(isSpam?'spam':'ham');
+  strip.style.display='block';
+  document.getElementById('heroCard').classList.add('result-active');
+  document.getElementById('verdictBig').textContent=isSpam?'⚠ SPAM DETECTED':'✓ Looks Legitimate';
+  document.getElementById('verdictBig').className='verdict-big '+(isSpam?'spam':'ham');
+  document.getElementById('verdictSub').textContent=isSpam
+    ?`Spam probability ${(spamProb*100).toFixed(1)}% — message contains known spam indicators.`
+    :`Spam probability ${(spamProb*100).toFixed(1)}% — matches legitimate message patterns.`;
+  const pct=Math.round(spamProb*100);
+  document.getElementById('probFill').style.width=pct+'%';
+  document.getElementById('probFill').style.background=`linear-gradient(90deg,${isSpam?'rgba(255,48,85,.6),var(--red)':'rgba(0,217,126,.6),var(--green)'})`;
+  document.getElementById('probPct').textContent=pct+'%';
+  document.getElementById('probPct').style.color=isSpam?'var(--red)':'var(--green)';
+  const sf=regions.filter(r=>r.type==='s');
+  const hf=regions.filter(r=>r.type==='h');
+  let kh='';
+  if(sf.length||hf.length){
+    kh='<div class="kw-sum-label">Detected keyword signals</div><div class="kw-chips">';
+    sf.forEach((r,i)=>kh+=`<span class="kw-chip spam" style="animation-delay:${i*.04}s">🔴 ${r.word} <span class="wt">${r.weight}</span></span>`);
+    hf.forEach((r,i)=>kh+=`<span class="kw-chip ham" style="animation-delay:${(sf.length+i)*.04}s">🟢 ${r.word} <span class="wt">${r.weight}</span></span>`);
+    kh+='</div>';
+  }else{kh='<div class="kw-sum-label" style="color:var(--muted)">No high-signal keywords matched — classification based on token patterns.</div>';}
+  document.getElementById('kwSummary').innerHTML=kh;
+}
+function loadSample(type){
+  const s={
+    spam:"CONGRATULATIONS! You've been selected to receive a FREE £500 gift voucher. Call 07000123456 NOW to claim before midnight! Reply STOP to opt out.",
+    ham:"Hey, are you free this weekend? We're thinking of going hiking on Sunday and wanted to see if you'd like to join us. Let me know!"
   };
-  document.getElementById('msgInput').value = samples[type];
-  document.getElementById('resultPanel').style.display = 'none';
+  document.getElementById('msgInput').value=s[type];
+  document.getElementById('hlPane').style.display='none';
+  document.getElementById('resultStrip').style.display='none';
+  document.getElementById('heroCard').classList.remove('result-active');
+  if(bestClf)document.getElementById('classifyBtn').disabled=false;
+}
+function clearMsg(){
+  document.getElementById('msgInput').value='';
+  document.getElementById('hlPane').style.display='none';
+  document.getElementById('resultStrip').style.display='none';
+  document.getElementById('heroCard').classList.remove('result-active');
 }
 
-// Keyboard shortcut
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') liveClassify();
-});
+/* keyboard shortcut */
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')liveClassify();});
+document.getElementById('classifyBtn').disabled=true;
 </script>
 </body>
 </html>
